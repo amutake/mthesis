@@ -12,7 +12,7 @@ Actario では、
 最後に Actario が持つ Erlang へのコード抽出機を用いて実装を Erlang に抽出する。
 
 \begin{figure}[tp]
-  \includegraphics[width=14cm]{./img/workflow.pdf}
+  \includegraphics[width=14cm]{./img/overview/workflow.pdf}
   \label{img:overview:workflow}
   \caption{Actario のワークフロー}
 \end{figure}
@@ -22,9 +22,41 @@ Actario では、
 このアクターシステムは、一つのアクターのなかで階乗を計算するのではなく、
 次に何の数を掛けるかという継続を持っているアクターを生成しながら、
 階乗を計算する。(？)
+図 \ref{img:overview:fact} はこのアクターシステムに $3$ を与えたときの動きを表した図である。
 
 \begin{figure}[tp]
-  \lstinputlisting{./code/overview/fact.v}
-  \label{code:overview:fact}
+  \includegraphics[width=14cm]{./img/overview/fact.pdf}
+  \label{img:overview:fact}
+  \caption{fact 3}
+\end{figure}
+
+Actario を用いると、階乗計算アクターシステムは図 \ref{code:overview:fact-impl} のように記述することができる。
+
+\begin{figure}[tp]
+  \lstinputlisting{./code/overview/fact_impl.v}
+  \label{code:overview:fact-impl}
   \caption{階乗計算アクターシステム}
+\end{figure}
+
+また、証明の例として、「このアクターシステムは階乗を計算する」ということを証明する。
+階乗を計算するということはつまりメッセージとして送られた任意の自然数 $n$ に対して、$n!$ を返信するということなので、
+命題は図 \ref{code:overview:fact-spec} のように記述することができる。
+
+\begin{figure}[tp]
+  \begin{lstlisting}
+    dummy
+  \end{lstlisting}
+  \label{code:overview:fact-spec}
+  \caption{命題の定義}
+\end{figure}
+
+そして、この命題は図 \ref{code:overview:fact-proof} のように証明することができる。
+証明の方針としては、$n$ に対しての帰納法で証明する。
+
+\begin{figure}[tp]
+  \begin{lstlisting}
+    dummy
+  \end{lstlisting}
+  \label{code:overview:fact-proof}
+  \caption{証明}
 \end{figure}
