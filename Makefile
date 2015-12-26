@@ -4,10 +4,10 @@ MAIN=main
 TEXINPUTS=".:./sty//:"
 
 pdf: $(MAIN).tex
-	TEXINPUTS=$(TEXINPUTS) latexmk -pdf $(MAIN)
+	TEXINPUTS=$(TEXINPUTS) latexmk -pdfdvi $(MAIN)
 
 cont: $(MAIN).tex
-	TEXINPUTS=$(TEXINPUTS) latexmk -pvc -pdf $(MAIN)
+	TEXINPUTS=$(TEXINPUTS) latexmk -pvc -pdfdvi $(MAIN)
 
 clean:
 	latexmk -C $(MAIN)

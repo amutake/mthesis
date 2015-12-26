@@ -8,6 +8,7 @@
 *.synctex.gz
 *.fdb_latexmk
 *.fls
+*.toc
 
 _misc/
 _reference/
@@ -15,4 +16,4 @@ _reference/
 *~
 .DS_Store
 
-sigplanconf.pdf
+main.pdf
