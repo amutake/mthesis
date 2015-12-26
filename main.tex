@@ -1,5 +1,30 @@
-\documentclass[12pt]{jreport}
+\documentclass[12pt,dvipdfmx]{jreport}
 \usepackage{mthesis}
+\usepackage{graphicx,xcolor}
+\usepackage{bcprules}
+\usepackage{listings,lstcoq,lsterlang}
+
+\lstdefinestyle{default}{
+  language=coq,
+  basicstyle={\ttfamily\normalsize},
+  breaklines=true,
+  % frame=tb,
+  framesep=6pt,
+  captionpos=b,
+  numberstyle=\scriptsize,
+  numbers=left,
+  numbersep=6pt,
+  xleftmargin=12pt,
+  aboveskip=1em,
+  belowskip=1em,
+}
+\lstdefinestyle{small}{
+  style=default,
+  basicstyle={\ttfamily\small},
+}
+\lstset{
+  style=default
+}
 
 \年度{平成27年度}
 \提出年月{平成28年1月}
@@ -19,7 +44,7 @@
 
 \input{./intro.tex}
 \input{./background.tex}
-\input{./actario.tex}
+\input{./overview.tex}
 \input{./formalization.tex}
 \input{./proof.tex}
 \input{./example.tex}

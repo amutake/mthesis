@@ -1,0 +1,35 @@
+\definecolor{dkgreen}{rgb}{0,0.4,0}
+\definecolor{dkviolet}{rgb}{0.6,0,0.4}
+\definecolor{dkblue}{rgb}{0,0,0.6}
+\definecolor{ltblue}{rgb}{0.2,0.2,1}
+
+\lstdefinelanguage{Erlang}{
+  mathescape=true,
+  texcl=false,
+  sensitive=true,
+  %% comments
+  morecomment=[l]{\%},
+  commentstyle=\ttfamily\color{gray},
+  %% preamble
+  alsoletter={-},
+  morekeywords=[1]{
+    -module, -export, -compile, -type, -spec
+  },
+  keywordstyle=[1]{\ttfamily\color{dkgreen}},
+  %% syntax
+  morekeywords=[2]{
+    receive, end, try, catch, fun, case, of
+  },
+  keywordstyle=[2]{\ttfamily\color{dkblue}},
+  %% string
+  morestring=[b]",
+  showstringspaces=false,
+  stringstyle=\ttfamily\color{dkviolet},
+  %% colors
+  identifierstyle={\ttfamily\color{black}},
+  %%
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  columns=[l]fullflexible,
+}
