@@ -1,12 +1,248 @@
 \chapter{アクターモデルの形式化}
+\label{chapter:formalization}
 
 本章では、Actario においてアクターモデルをどのように形式化を行っているかということを説明する。
 まず、意味論の形式化、名前付け、
 障害と回復、
 
+\section{意味論の形式化}
+
+配置 (configuration) は
+
+アクターモデルの操作的意味を configuration のラベル付き遷移システムとして定式化する。
+これ以降用いる記号を図~\ref{expr:formalization:config}のように定義する。
+
+\begin{figure}[t]
+  \begin{displaymath}
+    \begin{array}{rclcl}
+      c & \in & \textit{Configuration} & =   & \textit{Set(InFlight)} \times \textit{Set(Actor)} \\
+      a & \in & \textit{Actor}  & =   & \textit{Name} \times \textit{Actions} \times \mathbb{N} \\
+      n & \in & \textit{Name}   & ::= & \textsf{toplevel}(s) \\
+        &     &                 &   | & \textsf{generated}(g, n) \\
+      m & \in & \textit{Message} & =  & \textit{Name} + \textit{PrimVal} + \\
+        &     &                 &     & \textit{Message} \times \cdots \times \textit{Message} \\
+      i & \in & \textit{InFlight} & = & \textit{Name} \times \textit{Name} \times \textit{Message} \\
+      b & \in & \textit{Behavior} & = & \textit{Message} \rightarrow \textit{Actions} \\
+      \alpha & \in & \textit{Actions} & ::= & \textsf{send}(n, m, \alpha) \\
+        &     &                 &   | & \textsf{new}(b, \kappa) \\
+        &     &                 &   | & \textsf{self}(\kappa) \\
+        &     &                 &   | & \textsf{become}(b) \\
+      l & \in & \textit{Label}  & ::= & \textsf{Receive}(n, n, m) \\
+        &     &                 &   | & \textsf{Send}(n, n, m) \\
+        &     &                 &   | & \textsf{New}(n) \\
+        &     &                 &   | & \textsf{Self}(n) \\
+      \kappa & \in & \textit{Name} \rightarrow \textit{Actions} \\
+      g & \in & \mathbb{N} & &
+    \end{array}
+  \end{displaymath}
+  \caption{Configuration}\label{expr:}
+\end{figure}
+
+
+\begin{figure}[t]
+  \begin{displaymath}
+    \begin{array}{rcl}
+      (I \uplus \{(n_{\textrm{to}}, n_{\textrm{from}}, m)\}, A \cup \{(n_{\textrm{to}}, \textsf{become}(b), g)\}) &
+      \overset{\textsf{Receive}(n_{\textrm{to}}, n_{\textrm{from}}, m)}{\leadsto} &
+      (I, A \cup \{(n_{\textrm{to}}, b(m), g)\})
+      \hfill \textsc{(Receive)} \\[1ex]
+
+      (I, A \cup \{(n_{\textrm{from}}, \textsf{send}(n_{\textrm{to}}, m, \alpha), g)\}) &
+      \overset{\textsf{Send}(n_{\textrm{from}}, n_{\textrm{to}}, m)}{\leadsto} &
+      (I \uplus \{(n_{\textrm{to}}, n_{\textrm{from}}, m)\}, A \cup \{(n_{\textrm{from}}, \alpha, g)\}) \\
+      & & \hfill \textsc{(Send)} \\[1ex]
+
+      (I, A \cup \{(n, \textsf{new}(b, \kappa), g)\}) &
+      \overset{\textsf{New}(n')}{\leadsto} &
+      (I, A \cup \{(n, \kappa(n'), g + 1), (n', \textsf{become}(b), 0)\}) \\
+      & & \hfill \textrm{where}\ n' := \textsf{generated}(g, n) \\
+      & & \hfill \textsc{(New)} \\[1ex]
+
+      (I, A \cup \{(n, \textsf{self}(\kappa), g)\}) &
+      \overset{\textsf{Self}(n)}{\leadsto} &
+      (I, A \cup \{n, \kappa(n), g\})
+      \hfill \textsc{(Self)}
+    \end{array}
+  \end{displaymath}
+  \caption{labeled transition semantics}\label{expr:formalization:semantics}
+\end{figure}
 
 
 
-\section{配置}
+\subsection{名前の一意性の証明}
 
-配置 (configuration)
+この名前付けの方法によって生成された名前は必ず一意になるということを証明する。
+これを証明するために、名前に関する \textit{trans invariant} という遷移の間で変わらない性質を定義する。
+trans invariant は以下のように3つの述語 \texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup} の組で定義される。
+
+\begin{displaymath}
+  \begin{array}{l}
+    \texttt{trans\_invariant}(c) := \\
+    \quad \texttt{chain}(c) \wedge \texttt{gen\_fresh}(c) \wedge \texttt{no\_dup}(c)
+  \end{array}
+\end{displaymath}
+
+\texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup} の簡単な説明は以下のとおりである。
+
+\begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
+\item[\texttt{chain}]
+  配置の各アクターについて、そのアクターが他のアクターから生成されたものであるなら親アクターはその配置に存在している。
+\item[\texttt{gen\_fresh}]
+  配置の各アクターについて、そのアクターが次に生成するアクターの名前は配置内で新しい名前である。
+\item[\texttt{no\_dup}]
+  配置のすべてのアクターの名前は一意である。
+\end{description}
+
+\subsubsection{Functions}
+
+Before starting the explanation and the proof, we define some functions used in this section.
+
+\begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
+\item[\texttt{actors} $: \textit{Configuration} \rightarrow \textit{Set(Actor)}$]
+  \texttt{actors} returns the set of actors in the given configuration.
+\item[\texttt{parent} $: \textit{Actor} \rightarrow \textit{Actor}$]
+  \texttt{parent} returns the parent actor of the given actor.
+  If the given actor is toplevel actor, the function returns nothing. % null?
+\item[\texttt{gen\_number} $: \textit{Actor} \rightarrow \mathbb{N}$]
+  \texttt{gen\_number} returns generated number of the name of the given actor.
+  If the given actor is toplevel actor, the function returns nothing.
+\item[\texttt{next\_number} $: \textit{Actor} \rightarrow \mathbb{N}$]
+  \texttt{next\_number} returns next generation number of the given actor.
+\item[\texttt{name} $: \textit{Actor} \rightarrow \textit{Name}$]
+  \texttt{name} returns the name of the given actor.
+\item[\texttt{names} $: \textit{Set(Actor)} \rightarrow \textit{Set(Name)}$]
+  \texttt{names} returns names of the given set of actors.
+\end{description}
+
+\subsubsection{Chain Property}
+We define a predicate of configuration, called \texttt{chain}.
+\texttt{chain} is the predicate that, for each actor in the given configuration, if it is generated by another actor, the parent actor is also in the configuration.
+\texttt{chain} is defined as the following.
+
+\begin{displaymath}
+  \begin{array}{l}
+    \texttt{chain}(c) := \\
+    \quad \forall a \in \texttt{actors}(c), \forall p, p = \texttt{parent}(a) \Rightarrow p \in \texttt{actors}(c)
+  \end{array}
+\end{displaymath}
+
+Then, we can prove \textit{chain preservation property} that chain is preserved between any transitions.
+The proof is by case analysis on the label.
+\texttt{chain} is decided by only actor names, and the transition which have a possibility to change the names in the configuration is only \textsc{New} transition.
+Therefore, we consider only the case of \textsc{New} transition.
+
+\begin{lemma}{chain preservation}
+\begin{displaymath}
+  \begin{array}{l}
+    \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
+    \quad \texttt{chain}(c) \wedge c \overset{l}{\leadsto} c' \Rightarrow \texttt{chain}(c')
+  \end{array}
+\end{displaymath}
+\end{lemma}
+
+\subsubsection{Gen Fresh Property}
+We define \texttt{gen\_fresh} predicate that, for each actor in the configuration, the name of its child is always fresh.
+The definition of \texttt{gen\_fresh} is complicated a little.
+We translate the proposition that next generated name is fresh to the following.
+
+\begin{displaymath}
+  \begin{array}{l}
+    \texttt{gen\_fresh}(c) := \\
+    \quad \forall a \in \texttt{actors}(c), \forall p \in \texttt{actors}(c), p = \texttt{parent}(a) \Rightarrow \\
+    \quad \quad \quad \texttt{gen\_number}(a) < \texttt{next\_number}(p)
+  \end{array}
+\end{displaymath}
+
+
+It is guaranteed that the actor name generated in the next is fresh if satisfying \texttt{gen\_fresh} predicate by the relation of next generation numbers and actor names. %% For each actor in the configuration, if its parent is in the configuration, the next generation number of the parent actor is greater than the generation number of the name of the child actor.
+However, the actor name generated after the next is not always fresh name.
+For example, if there are two actors ($A$ and $B$) that have the same name and the same next generation number and actor $A$ generates a child actor and actor $B$ generates a child actor, although \texttt{gen\_fresh} holds, these child actors have the same name.
+Furthermore, if the parent of the actor $A$ does not exist in the configuration and the parent of the parent exists in the configuration, and the parent of the parent actor generates an actor and it also generates an actor, then the name is possible to have the same as $A$'s one.
+
+%% つまり、あるアクターについて、システム内に親アクターがいる場合、親アクターが次に生成する番号は自分の番号よりも大きい、ということにより、次に生成するアクターの名前が被らないようになっている。
+%% ただし、次に生成するアクターの名前は fresh でもその次に生成するアクターは fresh ではないこともある。
+%% 例えば、同じ名前でかつ次の generation number も同じという2つのアクターがいた場合、まず片方のアクターが生成するアクターの名前は fresh だが、その次にもう片方のアクターがアクターを生成したとすると、名前が被ってしまう。
+%% また、親アクターがシステム内に存在せずに、親の親は存在しているという場合、親の親が次に生成するアクターの名前は被らないが、その子アクターが次に生成する名前は被ってしまう可能性がある。(図？)
+
+Thus, to prove \textit{gen fresh preservation} proposition that \texttt{gen\_fresh} is preserved between transitions, it is necessary to use \texttt{chain} and \texttt{no\_dup} as hypotheses.
+%% The proof is by ...
+%% 以上のように gen\_fresh だけでは gen\_fresh を導けないので、gen\_fresh の証明には chain と no\_dup の性質が必要になる。
+
+\begin{lemma}{gen fresh preservation}
+\begin{displaymath}
+  \begin{array}{l}
+    \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
+    \quad \texttt{chain}(c) \wedge \texttt{gen\_fresh}(c) \wedge \texttt{no\_dup}(c) \wedge c \overset{l}{\leadsto} c' \Rightarrow \\
+    \quad \texttt{gen\_fresh}(c')
+  \end{array}
+\end{displaymath}
+\end{lemma}
+
+\subsubsection{No Dup Property}
+We define \texttt{no\_dup} predicate that all actor names in the given configuration are unique.
+This is the property we have to prove.
+\texttt{no\_dup} is defined as the following.
+
+\begin{displaymath}
+  \begin{array}{l}
+    \texttt{no\_dup}(c) := \\
+    \quad \forall a \in \texttt{actors}(c), \texttt{name}(a) \notin
+    \texttt{names}(\texttt{actors}(c) \setminus \{a\})
+  \end{array}
+\end{displaymath}
+
+We proved \textit{no dup preservation} property defined as the following.
+It represents that if the actor names in the configuration is not duplicate and the next generated actor name is fresh, then \texttt{no\_dup} holds in the next configuration.
+
+\begin{lemma}{no dup preservation}
+\begin{displaymath}
+  \begin{array}{l}
+    \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
+    \quad \texttt{gen\_fresh}(c) \wedge \texttt{no\_dup}(c) \wedge c \overset{l}{\leadsto} c' \Rightarrow \texttt{no\_dup}(c')
+  \end{array}
+\end{displaymath}
+\end{lemma}
+
+\subsubsection{Proof of Name Uniqueness Property}
+Then, we start to prove name uniqueness.
+First, we prove trans invariant preservation that trans invariant is preserved between transitions.
+This is obvious by chain preservation, gen fresh preservation and no dup preservation.
+\begin{lemma}{trans invariant preservation}
+  \begin{displaymath}
+    \begin{array}{l}
+      \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
+      \quad \texttt{trans\_invariant}(c) \wedge c \overset{l}{\leadsto} c' \Rightarrow \\
+      \quad \texttt{trans\_invariant}(c')
+    \end{array}
+  \end{displaymath}
+\end{lemma}
+
+Next, we prove that if trans invariant holds in initial configuration, trans invariant holds after arbitrary transitions.
+
+%% 次に初期状態について trans\_invariant が成り立っていれば、任意回の遷移後も trans\_invariant が成り立つということをを証明する。
+
+\begin{lemma}{trans invariant preservation star}
+  \begin{displaymath}
+    \begin{array}{l}
+      \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
+      \quad \texttt{trans\_invariant}(c) \wedge c \overset{l}{\leadsto\star} c' \Rightarrow \\
+      \quad \texttt{trans\_invariant}(c')
+    \end{array}
+  \end{displaymath}
+\end{lemma}
+$c \overset{l}{\leadsto\star} c'$ represents reflexive transitive closure of transition.
+The proof is by induction of reflexive transitive closure of transition and trans invariant preservation.
+
+Finally, we can prove name uniqueness.
+\begin{theorem}{name uniqueness}
+  \begin{displaymath}
+    \begin{array}{l}
+      \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
+      \quad \texttt{trans\_invariant}(c) \wedge c \overset{l}{\leadsto\star} c' \Rightarrow \texttt{no\_dup}(c')
+    \end{array}
+  \end{displaymath}
+\end{theorem}
+This is obvious by trans invariant preservation star because \texttt{no\_dup} is in \texttt{trans\_invariant}.
+
+
+\section{障害と回復の形式化}
