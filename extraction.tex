@@ -1,0 +1,26 @@
+\chapter{Erlang へのコード抽出}
+
+本章では、Actario が持っている Erlang へのコード抽出機構について説明する。
+
+\section{マッピング}
+
+\subsection{型のマッピング}
+
+代数的データ型はタプルで表現する。
+
+例えば、\texttt{nat} 型は Erlang では以下の表記になる。
+
+
+\begin{lstlisting}
+  O -> {o}
+  S O -> {s, {o}}
+  S (S O) -> {s, {s, {o}}}
+\end{lstlisting}
+
+\subsection{アクションのマッピング}
+
+アクションの部分のマッピングのみ特別扱いし、対応する Erlang のコードにマッピングする。
+
+\subsection{相互再帰関数}
+
+Erlang ではトップレベルの
