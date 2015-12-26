@@ -8,7 +8,11 @@ Prerequisites
 -------------
 
 - MacTeX
-- (make)
+  - platex
+  - dvipdfmx
+  - latexmk
+  - and some style files included in MacTeX
+- make (optional)
 
 
 Compilation
@@ -18,8 +22,8 @@ Compilation
 make
 ```
 
-or
+or if you don't have `make`,
 
 ```
-TEXINPUTS=".:./sty//:" latexmk pdfdvi main.tex
+TEXINPUTS=".:./sty//:" latexmk -pdfdvi main.tex
 ```
