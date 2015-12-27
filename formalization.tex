@@ -1,15 +1,19 @@
 \chapter{アクターモデルの形式化}
 \label{chapter:formalization}
 
-本章では、Actario においてアクターモデルをどのように形式化を行っているかということを説明する。
+本章では、Actarioにおいてアクターモデルをどのように形式化を行っているかということを説明する。
 まず、意味論の形式化、名前付け、
-障害と回復、
+障害と回復、fairnessの形式化
 
 \section{意味論の形式化}
 
-配置 (configuration) は
+まずアクターモデルの操作的意味論の形式化をCoqで行う。
 
-アクターモデルの操作的意味を configuration のラベル付き遷移システムとして定式化する。
+アクターの名前
+
+配置(configuration)は
+
+アクターモデルの操作的意味をconfigurationのラベル付き遷移システムとして定式化する。
 これ以降用いる記号を図~\ref{expr:formalization:config}のように定義する。
 
 \begin{figure}[t]
@@ -35,7 +39,7 @@
       g & \in & \mathbb{N} & &
     \end{array}
   \end{displaymath}
-  \caption{Configuration}\label{expr:}
+  \caption{Configuration}\label{expr:formalization:config}
 \end{figure}
 
 
@@ -72,8 +76,8 @@
 \subsection{名前の一意性の証明}
 
 この名前付けの方法によって生成された名前は必ず一意になるということを証明する。
-これを証明するために、名前に関する \textit{trans invariant} という遷移の間で変わらない性質を定義する。
-trans invariant は以下のように3つの述語 \texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup} の組で定義される。
+これを証明するために、名前に関する\textit{trans invariant}という遷移の間で変わらない性質を定義する。
+trans invariant は以下のように3つの述語\texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup}の組で定義される。
 
 \begin{displaymath}
   \begin{array}{l}
@@ -82,7 +86,7 @@ trans invariant は以下のように3つの述語 \texttt{chain}, \texttt{gen\_
   \end{array}
 \end{displaymath}
 
-\texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup} の簡単な説明は以下のとおりである。
+\texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup}の簡単な説明は以下のとおりである。
 
 \begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
 \item[\texttt{chain}]
@@ -246,3 +250,103 @@ This is obvious by trans invariant preservation star because \texttt{no\_dup} is
 
 
 \section{障害と回復の形式化}
+
+\section{Fairnessの形式化}
+
+Fairnessとは、アクターモデルが持つ性質で、発火する(?)可能性があるものはいつか発火されるというものである。
+通常、Fairnessを表現する際には時相論理が必要になるが、Coqは時相論理はサポートしていない。
+そのため、配置の遷移列である遷移パスを使ってFairnessを表現する。
+この手法はAppl$\pi$\cite{}で用いられている手法である。Appl$\pi$は$\pi$計算のためのライブラリであるが、Fairnessの定義方法についてはアクターモデルに対しても同様に用いることができる。
+
+\subsection{遷移パス}
+遷移パスは自然数$\mathbb{N}$から\texttt{option config}型への関数として定義する (図~\ref{code:formalization:path})。
+定義域の自然数は、初期状態から何回目の遷移によってこの配置になったかという番号である。この番号をインデックスと呼ぶ。
+値域はそのインデックスに対応する配置を表す。\texttt{config}型ではなく\texttt{option config}型になっているのは、これ以上遷移ができないパスも表したいからである。つまり、これ以上遷移ができない配置のインデックスを$n$とすると、$\forall m > 0, n + m$に遷移パス関数を適用した結果は\texttt{None}になる。
+
+\begin{figure}[tp]
+  \begin{lstlisting}
+    Definition path := nat -> option config.
+  \end{lstlisting}
+  \label{code:formalization:path}
+  \caption{遷移パスの定義}
+\end{figure}
+
+また、与えられた遷移パスが確かに遷移パスとしての仕様を満たしているか、という述語を定義する(図~\ref{code:formalization:path-spec})。
+すべてのインデックス$i$について、$i$番目の配置が存在するならば、$i+1$番目の配置が存在するならそれは遷移できるものか、それ以上遷移できない。$i$番目の配置が存在しないならば、その次の配置も存在しない、という意味である。
+
+\begin{figure}[tp]
+  \begin{lstlisting}
+Definition is_transition_path (p : path) : Prop :=
+  forall n,
+    (forall c, p n = Some c ->
+      (exists c' l, p (S n) = Some c' /\
+        c ~(l)~> c') \/
+      p (S n) = None) /\
+    (p n = None -> p (S n) = None).
+  \end{lstlisting}
+  \label{code:formalization:path-spec}
+  \caption{遷移パスの仕様}
+\end{figure}
+
+\subsection{遷移可能性}
+次に、与えられた配置が与えられたラベルでもって遷移ができるという述語を定義する。これを遷移可能性(enabled)と呼ぶ。
+Actarioでは、遷移可能性はある配置からあるラベルによって遷移した先の配置が存在すると定義する (図~\ref{code:formalization:enabled})。
+
+\begin{figure}[tp]
+  \begin{lstlisting}
+Definition enabled (c : config) (l : label) : Prop := exists c', c ~(l)~> c'.
+  \end{lstlisting}
+  \label{code:formalization:enabled}
+  \caption{遷移可能性}
+\end{figure}
+
+\subsection{Infinitely Often Enabled}
+無限にしばしば遷移可能になる
+We define the predicate that the transition is infinitely often enabled in the transition path.
+It is named \texttt{infinitely often enabled}.
+%% これは、すべての index n について、n 番目の configuration があるラベルによって遷移が可能ならば、その先そのラベルによって遷移が可能になる configuration が存在する、と定義する。
+
+\begin{lstlisting}
+Definition infinitely_often_enabled
+    (l : label) (p : path) : Prop :=
+  forall n c, p n = Some c ->
+    enabled c l ->
+    exists m c', m > n /\
+      p m = Some c' /\
+      enabled c' l.
+\end{lstlisting}
+
+
+\subsection{Eventually Processed}
+We define \texttt{eventually processed} that is the predicate of label and transition path.
+It represents that the transition with the label is processed eventually in the path.
+It is defined as follows.
+
+\begin{lstlisting}
+Definition eventually_processed
+    (l : label) (p : path) : Prop :=
+  exists n c c',
+    p n = Some c /\
+    p (S n) = Some c' /\
+    c ~(l)~> c'.
+\end{lstlisting}
+
+
+\subsection{Definition of Fairness}
+Then we can define \texttt{fairness} predicate for transition path.
+For the given transition path and for each label, if \texttt{infinitely often enabled} holds, then \texttt{eventually processed} holds.
+\texttt{is postfix of} predicate is used for representing 'infinite'.
+If \texttt{is postfix of} is not used, the transition may not be processed after the transition is processed although the transition is processed in whole the path.
+To prevent it, if \texttt{inifinitely often enabled} holds then \texttt{eventually processed} holds for arbitrary postfix path by using \texttt{is postfix path}.
+
+\begin{lstlisting}
+Definition is_postfix_of
+    (p' p : path) : Prop :=
+  exists n, (forall m, p' m = p (m + n)).
+
+Definition fairness : Prop :=
+  forall p p', is_postfix_of p' p ->
+    (forall l,
+      infinitely_often_enabled l p' ->
+      eventually_processed l p').
+\end{lstlisting}
