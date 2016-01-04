@@ -156,7 +156,6 @@ trans invariant は以下のように3つの述語\texttt{chain}, \texttt{gen\_f
 
 \subsubsection{新鮮性}
 
-
 We define \texttt{gen\_fresh} predicate that, for each actor in the configuration, the name of its child is always fresh.
 The definition of \texttt{gen\_fresh} is complicated a little.
 We translate the proposition that next generated name is fresh to the following.
@@ -194,10 +193,12 @@ Thus, to prove \textit{gen fresh preservation} proposition that \texttt{gen\_fre
 \end{displaymath}
 \end{lemma}
 
-\subsubsection{No Dup Property}
-We define \texttt{no\_dup} predicate that all actor names in the given configuration are unique.
-This is the property we have to prove.
-\texttt{no\_dup} is defined as the following.
+\subsubsection{一意性}
+
+一意性(\texttt{no\_dup})を定義する。
+一意性は、与えられた配置のすべてのアクターの名前が一意であるという述語である。
+これは最終的に証明したい名前の一意性の定義と同じである。
+一意性は以下のように定義できる。
 
 \begin{displaymath}
   \begin{array}{l}
@@ -207,10 +208,9 @@ This is the property we have to prove.
   \end{array}
 \end{displaymath}
 
-We proved \textit{no dup preservation} property defined as the following.
-It represents that if the actor names in the configuration is not duplicate and the next generated actor name is fresh, then \texttt{no\_dup} holds in the next configuration.
+連鎖保存性、新鮮保存性と同様に、一意保存性も定義する。
 
-\begin{lemma}{no dup preservation}
+\begin{lemma}{一意保存性}
 \begin{displaymath}
   \begin{array}{l}
     \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
@@ -219,11 +219,13 @@ It represents that if the actor names in the configuration is not duplicate and 
 \end{displaymath}
 \end{lemma}
 
-\subsubsection{Proof of Name Uniqueness Property}
-Then, we start to prove name uniqueness.
-First, we prove trans invariant preservation that trans invariant is preserved between transitions.
-This is obvious by chain preservation, gen fresh preservation and no dup preservation.
-\begin{lemma}{trans invariant preservation}
+\subsubsection{名前の一意性の証明}
+
+この意味論によって動的に生成される名前が一意になるということの証明を行う。
+まず、遷移の間で遷移不変性が保存されるという遷移不変保存性(trans invariant preservation)を証明する。
+遷移不変性は連鎖性、新鮮性、一意性から成るので、遷移不変保存性は明らかに成り立つ。
+
+\begin{lemma}{遷移不変保存性}
   \begin{displaymath}
     \begin{array}{l}
       \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
@@ -233,6 +235,7 @@ This is obvious by chain preservation, gen fresh preservation and no dup preserv
   \end{displaymath}
 \end{lemma}
 
+次に、
 Next, we prove that if trans invariant holds in initial configuration, trans invariant holds after arbitrary transitions.
 
 %% 次に初期状態について trans\_invariant が成り立っていれば、任意回の遷移後も trans\_invariant が成り立つということをを証明する。
@@ -246,6 +249,7 @@ Next, we prove that if trans invariant holds in initial configuration, trans inv
     \end{array}
   \end{displaymath}
 \end{lemma}
+
 $c \overset{l}{\leadsto\star} c'$ represents reflexive transitive closure of transition.
 The proof is by induction of reflexive transitive closure of transition and trans invariant preservation.
 
