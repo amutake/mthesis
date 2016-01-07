@@ -235,12 +235,9 @@ Thus, to prove \textit{gen fresh preservation} proposition that \texttt{gen\_fre
   \end{displaymath}
 \end{lemma}
 
-次に、
-Next, we prove that if trans invariant holds in initial configuration, trans invariant holds after arbitrary transitions.
+次に初期状態について遷移不変性が成り立っていれば、任意回の遷移後も遷移不変性が成り立つということをを証明する。
 
-%% 次に初期状態について trans\_invariant が成り立っていれば、任意回の遷移後も trans\_invariant が成り立つということをを証明する。
-
-\begin{lemma}{trans invariant preservation star}
+\begin{lemma}{遷移不変性(star)}
   \begin{displaymath}
     \begin{array}{l}
       \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
