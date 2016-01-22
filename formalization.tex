@@ -2,13 +2,33 @@
 \label{chapter:formalization}
 
 本章では、Actarioにおいてアクターモデルをどのように形式化を行っているかということを説明する。
-まず、意味論の形式化、名前付け、
+まず、意味論の形式化、そして名前付けの方法、その名前付けの方法が一意な名前を生成するということの証明の説明を行う。
 
 
 \section{意味論の形式化}
 
 アクターモデルの操作的意味をconfigurationのラベル付き遷移システムとして定式化する。
-これ以降用いる記号を図\ref{expr:formalization:config}と定義する。
+これ以降用いる記号を図\ref{expr:formalization:config}と定義する。また、Actarioではこれは図\ref{code:formalization:config}と定義している。
+
+\begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
+\item[\textit{Configuration}]
+  アクターシステムの配置を表す。実体はアクターの集合である。
+\item[\textit{Actor}]
+  アクターを表す。アクターの名前、まだ実行していないアクションの列、生成番号、振る舞いのテンプレート、メッセージキューから成る。
+\item[\textit{Name}]
+  アクターの名前を表す。名前は、トップレベルのアクターか、生成されたアクターのどちらかであるかを表す。トップレベルのアクターとはつまり親アクターがいないアクターであり、システムの名称を表す文字列を引数にとる。また、トップレベルのアクターをトップレベルアクターと呼ぶ。生成されたアクターは、親アクターの名前と、その親アクターが何番目に生成したアクターかを表す自然数(これを世代番号と呼ぶ)を引数にとる。
+\item[\textit{Message}]
+  メッセージは、アクターの名前、基本的なデータ型(自然数、文字列)、およびその組み合わせ(タプル)から構成される。
+\item[\textit{Behavior State}]
+  アクターの振る舞いを表す。メッセージを受け取り、アクションの列を返す関数である。
+\item[\textit{Actions State}]
+  アクターのアクションの列を表す。アクションには、他のアクターにメッセージを送る\textsf{send}、新しくアクターを生成する\textsf{new}、自分自身の名前を得る\textsf{self}、新しい状態になり次のメッセージの待ち状態になる\textsf{become}の4つがある。
+  \textsf{become}以外の各アクションは、最後の引数にこのアクションの継続を表すものをとる。つまり、メッセージの処理は必ず\textsf{become}で終わることになる。
+  また、ここでの\textit{State}は型引数であり、\textsf{become}の引数はこの型の値でなければならない。
+\item[\textit{Label}]
+  遷移システムのラベルを表す。\textsf{Receive}、\textsf{Send}、\textsf{New}、\textsf{Self}はそれぞれ消費したアクションが\textsf{become}、\textsf{send}、\textsf{new}、\textsf{self}であったときのラベルである。
+\end{description}
+
 
 \begin{figure}[t]
   \begin{displaymath}
@@ -16,7 +36,7 @@
       c & \in & \textit{Configuration} & =   & \textit{Set Actor} \\
       a & \in & \textit{Actor}  & =   & \textit{Name} \times \textit{Actions State} \times \mathbb{N} \times \\
         &     &                 &     & (\textit{State} \rightarrow \textit{Behavior State}) \times \textit{List Message} \\
-      n & \in & \textit{Name}   & ::= & \textsf{toplevel}(s) \\
+      n & \in & \textit{Name}   & ::= & \textsf{toplevel}(str) \\
         &     &                 &   | & \textsf{generated}(g, n) \\
       m & \in & \textit{Message} & =  & \textit{Name} + \textit{PrimVal} + \\
         &     &                 &     & \textit{Message} \times \cdots \times \textit{Message} \\
@@ -34,11 +54,18 @@
       g & \in & \mathbb{N} & & \\
       t & \in & \textit{State} \rightarrow \textit{Behavior State} \\
       q & \in & \textit{List Message}
+      str & \in & \textit{String}
     \end{array}
   \end{displaymath}
-  \caption{構文}\label{expr:formalization:config}
+  \caption{記号の定義}\label{expr:formalization:config}
 \end{figure}
 
+
+\begin{figure}
+  \lstinputlisting{./code/formalization/config.v}
+  \label{code:formalization:config}
+  \caption{Actarioでの記号の定義}
+\end{figure}
 
 \begin{figure}[t]\centering
   \begin{displaymath}
@@ -72,11 +99,16 @@
   \caption{ラベル付き遷移システム}\label{expr:formalization:semantics}
 \end{figure}
 
+\section{名前付け}
 
+アクターの名前は一意になる。
+一般的なアクターの実装では、一意な名前付けと名前の管理をするために、副作用を使った名前付けを行うことが多い。例えば、グローバル変数に自然数を持っておき、名前を生成する度にインクリメントする方法や、アクターのメモリのアドレスをアクターの名前にしてしまう方法がある。
+しかし、Coqのような副作用を記述できない純粋な言語では、一意な名前付けは問題になりやすい。
+Actarioでは、アクターの名前を、親の名前とその親が何番目に生成したアクターかを表す自然数のペアで表現することで、一意な名前付けを実現している。
 
 \subsection{名前の一意性の証明}
 
-この名前付けの方法によって生成された名前は必ず一意になるということを証明する。
+この意味論と名前付けの方法によって生成された名前は必ず一意になるということを証明する。
 これを証明するために、名前に関する\textit{trans invariant}という遷移の間で変わらない性質を定義する。
 trans invariant は以下のように3つの述語\texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup}の組で定義される。
 
@@ -91,11 +123,11 @@ trans invariant は以下のように3つの述語\texttt{chain}, \texttt{gen\_f
 
 \begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
 \item[\texttt{chain}]
-  配置の各アクターについて、そのアクターが他のアクターから生成されたものであるなら親アクターはその配置に存在している。
+  配置内の各アクターについて、そのアクターが他のアクターから生成されたものであるなら親アクターはその配置に存在している。
 \item[\texttt{gen\_fresh}]
-  配置の各アクターについて、そのアクターが次に生成するアクターの名前は配置内で新しい名前である。
+  配置内の各アクターについて、そのアクターが次に生成するアクターの名前は配置内で新しい名前である。
 \item[\texttt{no\_dup}]
-  配置のすべてのアクターの名前は一意である。
+  配置内のすべてのアクターの名前は一意である。
 \end{description}
 
 \subsubsection{Functions}
