@@ -48,3 +48,38 @@ Coqとは、フランス国立情報学自動制御研究所(INRIA)で開発が�
 
 CoqにはOCaml, Haskell, Schemeへのコード抽出器がデフォルトで内蔵されている。
 抽出器はプラグインの形で実装されており、
+
+\section{Erlang}
+
+Erlang\cite{erlang}は高可用なシステムを作るために作られたプログラミング言語である。
+並行計算のモデルとしてアクターモデルを採用している。Erlangにおいて、並行計算の主体はプロセスと呼ばれる。
+
+\subsection{基本的な構文}
+
+本論文で扱うErlangの基本的な構文について説明する。
+
+\begin{description}
+\item[変数]\mbox{}\\
+  大文字から始まる識別子は変数である。Erlangでは変数は不変であり、再代入することはできない。
+\item[アトム]\mbox{}\\
+  小文字から始まる識別子はアトム(atom)と呼ばれるシンボルである。
+\item[組]\mbox{}\\
+  波括弧で囲まれ、カンマで句切られた項は組(tuple)である。例えば\lstinline|{Var, atom, 42}|は変数\lstinline{Var}、アトム\lstinline{atom}、数値\lstinline{42}の組である。
+\item[関数]\mbox{}\\
+  同じ関数名で、異なった数の引数をとるような関数も定義できる。
+  関数名の後ろにスラッシュと数を書くと、その数の引数をとる関数と指定できる。
+  これを関数のアリティという。
+\end{description}
+
+\subsection{並行計算のための関数と構文}
+
+Erlang並行計算の基本的な関数および構文について解説する。
+
+\begin{description}
+\item<\lstinline{spawn/1}>\mbox{}\\
+  \lstinline{spawn/1}は新しいプロセスを作る関数である。新しいプロセスで行う処理が書かれた関数を受け取り、プロセスのIDを返す。\lstinline{spawn}関数はアリティが1から4までのものが定義されているが、本論文ではアリティが1のものだけを扱う。
+\item<\lstinline{send/2}>\mbox{}\\
+  \lstinline{send/2}は第一引数で指定したプロセスIDを持つプロセスに向けて、第二引数で指定した値を送信するという関数である。
+\item<\lstinline{receive}>\mbox{}\\
+  \lstinline{receive}はそのプロセスに向けて送られたメッセージを受け取り、パターンマッチを行う構文である。
+\end{description}

@@ -1,26 +1,210 @@
 \chapter{Erlangへのコード抽出}
 
-本章では、Actarioが持っているErlangへのコード抽出機構について説明する。
+Coqは組み込みでOCaml,Haskell,およびSchemeへのコード抽出機構をプラグインの形で持っている。
+コード抽出ではまずCoqからMiniMLと呼ばれるMLのサブセットになる簡易言語の抽象構文木に変換され、そこから各言語に変換される。
+Actarioはその各言語へ変換する部分を抜き出しErlang用に拡張したものをCoqの組み込みコード抽出機構と同様にプラグインの形で呼び出すという方法で、Erlangへのコード抽出機構を導入している。
+本章では、Actarioが持つコード抽出機構ではCoqからErlangへどのように変換されるかということについて説明する。
 
-\section{マッピング}
+\section{型のマッピング}
 
-\subsection{型のマッピング}
+Coqでは代数的データ型を定義することができるが、Erlangは型の定義を行うことはできない\footnote{型アノテーションとDializerというツールにより簡単な型チェックは行えるが、ここでは考えない}。
+よって、Coqで定義した代数的データ型の型定義は抽出せずに、値のみをErlangに変換する。
+Actarioのコード抽出機構では、Coqにおける代数的データ型の値はErlangにおいてはアトムとタプルで表現する。
+例えば、Coqでの\texttt{nat}型はErlangに抽出すると図\ref{code:extraction:datamapping-nat}のようなコードになる。
 
-代数的データ型はタプルで表現する。
-
-例えば、\texttt{nat}型はErlangでは以下の表記になる。
-
-
-\begin{lstlisting}
-  O -> {o}
-  S O -> {s, {o}}
-  S (S O) -> {s, {s, {o}}}
+\begin{figure}\centering
+\begin{minipage}{0.4\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt]
+O
+S O
+S (S O)
 \end{lstlisting}
+(a) Coqでの\coqi{nat}型の値
+\end{minipage}
+\hspace*{3ex}
+\begin{minipage}{0.4\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt]
+{o}
+{s, {o}}
+{s, {s, {o}}}
+\end{lstlisting}
+(b) Erlangでの\coqi{nat}型の値
+\end{minipage}
+\label{code:extraction:datamapping-nat}
+\caption{\coqi{nat}型の値}
+\end{figure}
 
-\subsection{アクションのマッピング}
+もう少し一般化して、図\ref{code:extraction:adt}のようにCoqの代数的(帰納的)データ型の値はErlangのアトムとタプルに変換される。
 
-アクションの部分のマッピングのみ特別扱いし、対応するErlangのコードにマッピングする。
+\begin{figure}\centering
+\begin{minipage}{1\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt]
+Inductive T : Set :=
+| ConstrA : A1 -> A2 -> ... -> T
+| ConstrB : B1 -> B2 -> ... -> T
+| ...
+| ConstrZ : Z1 -> Z2 -> ... -> T
+| ConstrT : T -> T -> ... -> T.
 
-\subsection{相互再帰関数}
+ConstrT (ConstrA a_1 a_2 ... a_n)
+        (ConstrB b_1 b_2 ... b_n)
+        ...
+        (ConstrZ z_1 z_2 ... z_n)
+        (ConstrT t_1 t_2 ... t_n)
+\end{lstlisting}
+(a) Coqでの代数的データ型の値
+\end{minipage}
+\begin{minipage}{1\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt,language=Erlang]
+{constrT,
+  {constrA, A_1, A_2, ..., A_n},
+  {constrB, B_1, B_2, ..., B_n},
+  ...
+  {constrZ, Z_1, Z_2, ..., Z_n},
+  {constrT, T_1, T_2, ..., T_n}}
+\end{lstlisting}
+(b) Erlangでの代数的データ型の値
+\end{minipage}
+\label{code:extraction:adt}
+\caption{代数的データ型}
+\end{figure}
 
-Erlangではトップレベルの
+\section{アクションのマッピング}
+
+Actarioではアクターモデルの各アクションを代数的データ型の各値コンストラクタとして定義しているため、前節で説明したとおり何もしなければアトムとタプルに変換されてしまう。
+これを避けるため、アクションの部分のマッピングのみ特別扱いし、対応するErlangのコードにマッピングする。つまり、\lstinline{action}型の値コンストラクタである\lstinline{new}、\lstinline{send}、\lstinline{self}、そして\lstinline{become}、\lstinline{behavior}型の値コンストラクタである\lstinline{receive}は、コンストラクタを表すアトムとその引数のタプルではなく、それぞれ\lstinline{spawn/1}、\lstinline{!演算子}、\lstinline{self/0}、関数呼び出し、\lstinline{receive}構文に変換する。
+例えば、アクターの振る舞いを表すコードは図\ref{code:extraction:action}のように変換される。
+
+\begin{figure}\centering
+\begin{minipage}{1\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt]
+Definition behvA (state : nat) : behavior State :=
+  receive (fun msg =>
+    match msg with
+      | name_msg sender =>
+        me <- self;
+        sender ! name_msg me;
+        become state
+      | _ =>
+        child <- new behvB with state;
+        child ! msg;
+        become (S state)
+    end)
+\end{lstlisting}
+(a) 変換前
+\end{minipage}
+\begin{minipage}{1\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt,language=Erlang]
+behvA(State) ->
+  receive Msg -> case Msg of
+    {name_msg, Sender} ->
+      Me = self(),
+      Sender ! {name_msg, Me},
+      behvA(State)
+    _ ->
+      Child = spawn(fun() -> behvB(State) end),
+      Child ! Msg
+      behvA({s, State})
+  end.
+\end{lstlisting}
+(b) 返還後
+\end{minipage}
+\label{code:extraction:action}
+\caption{アクションの変換}
+\end{figure}
+
+このようにすることで、Actarioを使って定義したアクターシステムを、アクターモデルとして同様の動きをするErlangのコードに変換することができる。
+
+\subsection{関数内での再帰関数}
+
+Erlangではトップレベルの関数については再帰関数を定義できるが、関数内で定義した関数は再帰することができない。
+Coqではトップレベルの関数も関数ローカルの関数も再帰なものを定義できるので、工夫の必要がある。
+
+この問題の解決には、再帰がサポートされていない言語でも再帰を行えるようにできるYコンビネータを使う。
+まず、関数の引数を増やし、第一引数に自分自身を表す関数を渡すようにしたものを用意する。
+その関数の中では再帰呼び出しだった関数呼び出しには引数として渡された関数を使う。
+それを使い、もともとの引数と同じものを定義する。
+相互再帰関数も図\ref{code:extraction:recursive}のように同様に定義できる。
+
+\begin{figure}\centering
+\begin{minipage}{1\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt]
+Definition foo :=
+  let rec f a = f (g a) and g a = f a in
+  ...
+\end{lstlisting}
+(a) 変換前
+\end{minipage}
+\begin{minipage}{1\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt,language=Erlang]
+foo() ->
+  F_fix = fun(F_fresh, G_fresh, A) ->
+    F_fresh(F_fresh, G_fresh, G_fresh(F_fresh, G_fresh, A)) end,
+  G_fix = fun(F_fresh, G_fresh, A) ->
+    F_fresh(F_fresh, G_fresh, A) end,
+  F = fun(A) -> F_fix(F_fix, G_fix, A) end,
+  G = fun(A) -> G_fix(F_fix, G_fix, A) end,
+  ...
+\end{lstlisting}
+(b) 変換後
+\end{minipage}
+\label{code:extraction:recursive}
+\caption{関数内相互再帰関数}
+\end{figure}
+
+\subsection{トップレベルの値}
+
+Coqではトップレベルに値を定義できるが、Erlangではトップレベルには関数しか定義できない。
+つまり、図\ref{code:extraction:toplevel-value-impossible}のようにErlangでは値定義が0引数関数を定義するようになってしまう。
+
+\begin{figure}\centering
+\begin{minipage}{0.4\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt]
+Definition zero := O.
+Definition one := S zero.
+\end{lstlisting}
+(a) 変換前
+\end{minipage}
+\hspace*{3ex}
+\begin{minipage}{0.4\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt,language=Erlang]
+zero() -> {o}.
+one() -> {s, zero()}.
+\end{lstlisting}
+(b) 変換後
+\end{minipage}
+\label{code:extraction:toplevel-value-impossible}
+\caption{トップレベルの値定義}
+\end{figure}
+
+Coqでは副作用がないため0引数関数呼び出しと値の呼び出しを同一視できるが、
+Erlangに変換する際にアクションを特別扱いすることによって0引数関数が副作用を持ってしまうことがある。
+副作用がある場合は0引数関数と値の呼び出しは同一視できないため、これを防ぐために、
+0引数関数に対してはErlangのコンパイル時にインライン展開させるオプション(図\ref{code:extraction:toplevel-value-impossible}の場合は\lstinline[language=Erlang]|-compile({inline,[zero/0]})|が\lstinline{zero/0}に対してインライン展開を行うことを指示するErlangのコンパイラオプションである)を付与する。
+
+ただし、トップレベルの値が関数を表している場合がある。例えば図\ref{code:extraction:toplevel-value-func}のような場合である。この場合はErlang側は\lstinline{plus1_alias/1}が定義されていないというコンパイルエラーになってしまう。
+これはActarioの制限となっており、Actarioのユーザーはこれを避けて定義しなければならない。
+
+
+\begin{figure}\centering
+\begin{minipage}{1\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt]
+Definition plus1 (n : nat) := S n.
+Definition plus1_alias := plus1.
+Definition plus1_call (n : nat) := plus1_alias n.
+\end{lstlisting}
+(a) 変換前
+\end{minipage}
+\begin{minipage}{1\textwidth}\centering
+\begin{lstlisting}[frame=single,numbers=none,xleftmargin=0pt,language=Erlang]
+-compile({inline, [plus1_alias/0]}).
+
+plus1(N) -> {s, N}.
+plus1_alias() -> plus1().
+plus1_call(N) -> plus1_alias(N).
+\end{lstlisting}
+(b) 変換後
+\end{minipage}
+\label{code:extraction:toplevel-value-func}
+\caption{トップレベルの値定義(関数の場合)}
+\end{figure}
