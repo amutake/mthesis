@@ -1,29 +1,37 @@
-Definition factorial_cont_behv (val : nat) (cust : name) :=
+Require Import Actario.syntax Actario.semantics.
+
+Inductive ContState : Set :=
+| val_cust : nat -> name -> ContState
+| cont_done : ContState.
+
+Definition factorial_cont_behv (state : ContState)
+    : behavior ContState :=
   receive (fun msg =>
-    match msg with
-    | nat_msg arg =>
+    match msg, state with
+    | nat_msg arg, val_cust val cust =>
       cust ! nat_msg (val * arg);
-      become empty_behv
-    | _ => become empty_behv
+      become cont_done
+    | _, _ => become state
     end).
 
-CoFixpoint factorial_behv :=
+Definition factorial_behv (state : unit) : behavior unit :=
   receive (fun msg =>
     match msg with
     | tuple_msg (nat_msg 0) (name_msg cust) =>
       cust ! nat_msg 1;
-      become factorial_behv
+      become tt
     | tuple_msg (nat_msg (S n)) (name_msg cust) =>
-      cont <- new (factorial_cont_behv (S n) cust);
+      cont <- new factorial_cont_behv with (val_cust (S n) cust);
       me <- self;
       me ! tuple_msg (nat_msg n) (name_msg cont);
-      become factorial_behv
-    | _ => become factorial_behv
+      become tt
+    | _ => become tt
     end).
 
-Definition factorial_system (n : nat) (cust : name) :=
-  init "factorial" (
-         x <- new factorial_behv;
-         x ! tuple_msg (nat_msg n) (name_msg cust);
-         become empty_behv
-       )
+Definition initial_actions (n : nat) (parent : name) := (
+  x <- new factorial_behv with tt;
+  x ! tuple_msg (nat_msg n) (name_msg parent);
+  become done).
+
+Definition factorial_system (n : nat) (parent : name) : config :=
+  init "factorial" (initial_actions n parent).

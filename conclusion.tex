@@ -45,6 +45,7 @@ Theorem receive_n :
 \end{enumerate}
 
 \begin{figure}[tp]
+  \centering
   \includegraphics[width=16cm]{./img/conclusion/fact_n.pdf}
   \label{img:conclusion:fact}
   \caption{$n$の階乗を計算するシステムの動き}
@@ -126,13 +127,21 @@ Theorem receive_client1 :
 本ライブラリの最終目標としては、障害が起こりうる環境においてもシステムの性質は成り立つというような命題に対して検証を行えるというものだったが、それはまだ達成できていない。
 これを達成するためには、まず障害を形式化し障害を含むような意味論にすること、障害から復旧させるような機構を導入すること、が挙げられる。
 
-障害を含むような意味論だと障害を全く含まないシステムと
-Verdiが行っているように、切り替える
+障害を含むような意味論は図\ref{code:conclusion:failure}のようなものになると考えられる。
 
+\begin{figure}
+\label{code:conclusion:failure}
+\caption{障害を含むような意味論}
+\end{figure}
 
+また、障害を含むような場合と障害を含まないような場合で分けて検証できるように、意味論を切り替えられるようにすることが必要である。
+この手法はVerdiが行っているもので、こうすることによって、ある障害については耐性があるが、別のある障害に対しては耐性がない、というようなことも検証できるようになる。
 
 
 \section{まとめ}
 
+(TODO)
 検証ライブラリActarioを提案した。
-実例を用いてActarioを、有用性を示した。
+Actarioの実例を見ながら説明した。
+Actarioが行っているアクターモデルの形式化について説明した。
+証明機構について説明した。

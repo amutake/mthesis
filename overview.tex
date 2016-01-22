@@ -12,7 +12,8 @@ Actarioでは、
 最後にActarioが持つErlangへのコード抽出機を用いて実装をErlangに抽出する。
 
 \begin{figure}[tp]
-  \includegraphics[width=14cm]{./img/overview/workflow.pdf}
+  \centering
+  \includegraphics[width=15cm]{./img/overview/workflow.pdf}
   \label{img:overview:workflow}
   \caption{Actarioのワークフロー}
 \end{figure}
@@ -31,7 +32,8 @@ Actarioを実際にどのように使うかを説明する。
 図~\ref{img:overview:fact}はこのアクターシステムに$3$を与えたときの動きを表した図である。
 
 \begin{figure}[tp]
-  \includegraphics[width=14cm]{./img/overview/fact.pdf}
+  \centering
+  \includegraphics[width=15cm]{./img/overview/fact.pdf}
   \label{img:overview:fact}
   \caption{fact 3}
 \end{figure}
@@ -54,25 +56,72 @@ Actarioを用いると階乗計算アクターシステムは図~\ref{code:overv
 
 \subsection{命題の定義と証明}
 
-また、証明の例として、「このアクターシステムは階乗を計算する」ということを証明する。
-階乗を計算するということはつまりメッセージとして送られた任意の自然数$n$に対して、$n!$を返信するということなので、
-命題は図~\ref{code:overview:fact-spec}のように記述することができる。
+また、証明の例として、「このアクターシステムは3の階乗を計算する」ということを証明する。
+3の階乗を計算するということはつまりメッセージとして送られた自然数$3$に対して、$3!$を返信するということなので、
+命題は図\ref{code:overview:fact-spec}のように記述することができる。これは、$3$を階乗計算システムに送信すると、トップレベルアクターはいつか$6$を受け取るという意味である。
 
 \begin{figure}[tp]
-  \begin{lstlisting}
-    dummy
-  \end{lstlisting}
-  \label{code:overview:fact-spec}
-  \caption{命題の定義}
+\begin{lstlisting}
+Theorem receive_3 :
+  eventually_receive (factorial_system 3 top) top (nat_msg 6).
+\end{lstlisting}
+\label{code:overview:fact-spec}
+\caption{命題の定義}
 \end{figure}
 
 そして、この命題は図~\ref{code:overview:fact-proof}のように証明することができる。
-証明の方針としては、$n$に対しての帰納法で証明する。
+証明の方針としては、遷移を一つずつ追っていき、トップレベルアクターが$6$を受け取るような遷移を見つけるというものである。遷移できなくなるまで遷移の生成はActarioが提供するタクティクが行う。
 
 \begin{figure}[tp]
-  \begin{lstlisting}
-    dummy
-  \end{lstlisting}
+\begin{lstlisting}
+Proof.
+  unfold_eventually eventually_receive=> p p0 is_path.
+  step_until_stop is_path p0.
+  finish 22 p22 p23.
+Qed.
+\end{lstlisting}
   \label{code:overview:fact-proof}
   \caption{証明}
+\end{figure}
+
+
+\subsection{Erlangへのコード抽出}
+
+ActarioはErlangへのコード抽出機構も持っているため、
+定義したアプリケーションをErlangに変換して実行させることもできる。
+図\ref{code:overview:extraction}のコマンドを実行すると、\coqi{factorial_behv}のErlang実装が\texttt{factorial.erl}というファイル名で吐き出される。
+これに対して、図\ref{code:overview:run}といったようなコードで変換されたアクターシステムを起動させると、実際にアクターシステムを実行することができる。
+
+\begin{figure}[tp]
+\begin{lstlisting}
+ActorExtraction "factorial" factorial_behv.
+\end{lstlisting}
+\label{code:overview:extraction}
+\caption{証明}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}
+-module(fact_main).
+-export([fact/1]).
+
+fact(N) ->
+    FactorialActor = spawn(fun() -> factorial:factorial_behv({tt}) end),
+    FactorialActor ! {tuple_msg, {nat_msg, int2nat(N)}, {name_msg, self()}},
+    receive
+        {nat_msg, Result} ->
+            io:fwrite("fact(~w) = ~w~n", [N, nat2int(Result)]);
+        _ ->
+            io:fwrite("error~n")
+    end.
+
+nat2int({o}) -> 0;
+nat2int({s, N}) -> nat2int(N) + 1.
+
+int2nat(0) -> {o};
+int2nat(N) when N > 0 -> {s, int2nat(N - 1)};
+int2nat(_) -> {o}.
+\end{lstlisting}
+\label{code:overview:run}
+\caption{証明}
 \end{figure}
