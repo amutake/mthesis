@@ -106,6 +106,8 @@
 しかし、Coqのような副作用を記述できない純粋な言語では、一意な名前付けは問題になりやすい。
 Actarioでは、アクターの名前を、親の名前とその親が何番目に生成したアクターかを表す自然数のペアで表現することで、一意な名前付けを実現している。
 
+また、アクターが内部状態として持つ次に生成する番号を生成番号、アクターの名前に含まれる親アクターが何番目に生成した番号かという番号を世代番号と呼ぶ。
+
 \subsection{名前の一意性の証明}
 
 この意味論と名前付けの方法によって生成された名前は必ず一意になるということを証明する。
@@ -151,20 +153,20 @@ trans invariant は以下のように3つの述語\texttt{chain}, \texttt{gen\_f
   アクターの集合を受け取り、その集合の各アクターの名前の集合を返す。
 \end{description}
 
-\subsubsection{連鎖性}
-
 連鎖性(chain)という、配置に関する述語を定義する。
 連鎖性とは、配置の中に含まれるアクターについて、そのアクターが他のアクターによって生成されたものであるならば、そのアクターも配置の中に含まれる、という述語である。
-つまり、トップレベルアクターを頂点とする木になるということである。(TODO:言い方。頂点？)
-ここで、トップレベルアクターが複数ある場合でも、(仲間はずれの)アクターが存在しなければ連鎖性は成り立つということに注意されたい。
+つまり、トップレベルアクターを起点とする木になるということである。
+ここで、トップレベルアクターが複数ある場合でも、トップレベルアクター以外で親アクターが存在しないアクターが存在しなければ連鎖性は成り立つということに注意されたい。
 連鎖性は以下のように定義される。
 
+\begin{definition}{chain}
 \begin{displaymath}
   \begin{array}{l}
     \texttt{chain}(c) := \\
     \quad \forall a \in \texttt{actors}(c), \forall p, p = \texttt{parent}(a) \Rightarrow p \in \texttt{actors}(c)
   \end{array}
 \end{displaymath}
+\end{definition}
 
 ここで、任意の遷移について連鎖性は保存される連鎖保存性を証明する。
 証明は遷移のラベルによる場合分けで行う。
@@ -179,20 +181,20 @@ trans invariant は以下のように3つの述語\texttt{chain}, \texttt{gen\_f
 \end{displaymath}
 \end{lemma}
 
-連鎖保存性の証明は図\ref{code:formalization:chain-preservation}による。
+%% \begin{figure}[tp]
+%%   \lstinputlisting{./code/formalization/chain_preservation.v}
+%%   \label{code:formalization:chain-preservation}
+%%   \caption{連鎖保存性の証明}
+%% \end{figure}
 
-\begin{figure}[tp]
-  \lstinputlisting{./code/formalization/chain_preservation.v}
-  \label{code:formalization:chain-preservation}
-  \caption{連鎖保存性の証明}
-\end{figure}
+次に、\coqi{gen_fresh}を定義する。
+\coqi{gen_fresh}は任意のアクターが次に生成する名前は必ず一意になるという述語であるが、
+Actarioではこれを以下のように定義することで実現している。
+%% We define \texttt{gen\_fresh} predicate that, for each actor in the configuration, the name of its child is always fresh.
+%% The definition of \texttt{gen\_fresh} is complicated a little.
+%% We translate the proposition that next generated name is fresh to the following.
 
-\subsubsection{新鮮性}
-
-We define \texttt{gen\_fresh} predicate that, for each actor in the configuration, the name of its child is always fresh.
-The definition of \texttt{gen\_fresh} is complicated a little.
-We translate the proposition that next generated name is fresh to the following.
-
+\begin{definition}{gen fresh}
 \begin{displaymath}
   \begin{array}{l}
     \texttt{gen\_fresh}(c) := \\
@@ -200,19 +202,21 @@ We translate the proposition that next generated name is fresh to the following.
     \quad \quad \quad \texttt{gen\_number}(a) < \texttt{next\_number}(p)
   \end{array}
 \end{displaymath}
+\end{definition}
 
+%% It is guaranteed that the actor name generated in the next is fresh if satisfying \texttt{gen\_fresh} predicate by the relation of next generation numbers and actor names. %% For each actor in the configuration, if its parent is in the configuration, the next generation number of the parent actor is greater than the generation number of the name of the child actor.
+%% However, the actor name generated after the next is not always fresh name.
+%% For example, if there are two actors ($A$ and $B$) that have the same name and the same next generation number and actor $A$ generates a child actor and actor $B$ generates a child actor, although \texttt{gen\_fresh} holds, these child actors have the same name.
+%% Furthermore, if the parent of the actor $A$ does not exist in the configuration and the parent of the parent exists in the configuration, and the parent of the parent actor generates an actor and it also generates an actor, then the name is possible to have the same as $A$'s one.
 
-It is guaranteed that the actor name generated in the next is fresh if satisfying \texttt{gen\_fresh} predicate by the relation of next generation numbers and actor names. %% For each actor in the configuration, if its parent is in the configuration, the next generation number of the parent actor is greater than the generation number of the name of the child actor.
-However, the actor name generated after the next is not always fresh name.
-For example, if there are two actors ($A$ and $B$) that have the same name and the same next generation number and actor $A$ generates a child actor and actor $B$ generates a child actor, although \texttt{gen\_fresh} holds, these child actors have the same name.
-Furthermore, if the parent of the actor $A$ does not exist in the configuration and the parent of the parent exists in the configuration, and the parent of the parent actor generates an actor and it also generates an actor, then the name is possible to have the same as $A$'s one.
-
-つまり、あるアクターについて、システム内に親アクターがいる場合、親アクターが次に生成する番号は自分の番号よりも大きい、ということにより、次に生成するアクターの名前が被らないようになっている。
+つまり、あるアクターについて、システム内に親アクターがいる場合、親アクターが次に生成する番号は自分の番号よりも大きい、ということにより、次に生成するアクターの名前が被らないようにしている。
 ただし、次に生成するアクターの名前は fresh でもその次に生成するアクターは fresh ではないこともある。
-例えば、同じ名前でかつ次の generation number も同じという2つのアクターがいた場合、まず片方のアクターが生成するアクターの名前は fresh だが、その次にもう片方のアクターがアクターを生成したとすると、名前が被ってしまう。
-また、親アクターがシステム内に存在せずに、親の親は存在しているという場合、親の親が次に生成するアクターの名前は被らないが、その子アクターが次に生成する名前は被ってしまう可能性がある。(図？)
+例えば、同じ名前でかつ次の生成番号も同じという2つのアクターがいた場合、まず片方のアクターが生成するアクターの名前は fresh だが、その次にもう片方のアクターがアクターを生成したとすると、名前が被ってしまう。
+また、親アクターがシステム内に存在せずに、親の親は存在しているという場合、親の親が次に生成するアクターの名前は被らないが、その子アクターが次に生成する名前は被ってしまう可能性がある。
 
-Thus, to prove \textit{gen fresh preservation} proposition that \texttt{gen\_fresh} is preserved between transitions, it is necessary to use \texttt{chain} and \texttt{no\_dup} as hypotheses.
+この\coqi{gen_fresh}が成り立っていれば確かに
+
+%% Thus, to prove \textit{gen fresh preservation} proposition that \texttt{gen\_fresh} is preserved between transitions, it is necessary to use \texttt{chain} and \texttt{no\_dup} as hypotheses.
 %% The proof is by ...
 %% 以上のように gen\_fresh だけでは gen\_fresh を導けないので、gen\_fresh の証明には chain と no\_dup の性質が必要になる。
 
