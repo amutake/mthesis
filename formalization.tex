@@ -3,72 +3,73 @@
 
 本章では、Actarioにおいてアクターモデルをどのように形式化を行っているかということを説明する。
 まず、意味論の形式化、名前付け、
-障害と回復、fairnessの形式化
+
 
 \section{意味論の形式化}
 
-まずアクターモデルの操作的意味論の形式化をCoqで行う。
-
-アクターの名前
-
-配置(configuration)は
-
 アクターモデルの操作的意味をconfigurationのラベル付き遷移システムとして定式化する。
-これ以降用いる記号を図~\ref{expr:formalization:config}のように定義する。
+これ以降用いる記号を図\ref{expr:formalization:config}と定義する。
 
 \begin{figure}[t]
   \begin{displaymath}
     \begin{array}{rclcl}
-      c & \in & \textit{Configuration} & =   & \textit{Set(InFlight)} \times \textit{Set(Actor)} \\
-      a & \in & \textit{Actor}  & =   & \textit{Name} \times \textit{Actions} \times \mathbb{N} \\
+      c & \in & \textit{Configuration} & =   & \textit{Set Actor} \\
+      a & \in & \textit{Actor}  & =   & \textit{Name} \times \textit{Actions State} \times \mathbb{N} \times \\
+        &     &                 &     & (\textit{State} \rightarrow \textit{Behavior State}) \times \textit{List Message} \\
       n & \in & \textit{Name}   & ::= & \textsf{toplevel}(s) \\
         &     &                 &   | & \textsf{generated}(g, n) \\
       m & \in & \textit{Message} & =  & \textit{Name} + \textit{PrimVal} + \\
         &     &                 &     & \textit{Message} \times \cdots \times \textit{Message} \\
-      i & \in & \textit{InFlight} & = & \textit{Name} \times \textit{Name} \times \textit{Message} \\
-      b & \in & \textit{Behavior} & = & \textit{Message} \rightarrow \textit{Actions} \\
-      \alpha & \in & \textit{Actions} & ::= & \textsf{send}(n, m, \alpha) \\
-        &     &                 &   | & \textsf{new}(b, \kappa) \\
+      b & \in & \textit{Behavior State} & = & \textit{Message} \rightarrow \textit{Actions State} \\
+      \alpha & \in & \textit{Actions State} & ::= & \textsf{send}(n, m, \alpha) \\
+        &     &                 &   | & \textsf{new}(t, s, \kappa) \\
         &     &                 &   | & \textsf{self}(\kappa) \\
-        &     &                 &   | & \textsf{become}(b) \\
-      l & \in & \textit{Label}  & ::= & \textsf{Receive}(n, n, m) \\
+        &     &                 &   | & \textsf{become}(s) \\
+      l & \in & \textit{Label}  & ::= & \textsf{Receive}(n, m) \\
         &     &                 &   | & \textsf{Send}(n, n, m) \\
         &     &                 &   | & \textsf{New}(n) \\
         &     &                 &   | & \textsf{Self}(n) \\
-      \kappa & \in & \textit{Name} \rightarrow \textit{Actions} \\
-      g & \in & \mathbb{N} & &
+      \kappa & \in & \textit{Name} \rightarrow \textit{Actions State} \\
+      s & \in & \textit{State} & & \\
+      g & \in & \mathbb{N} & & \\
+      t & \in & \textit{State} \rightarrow \textit{Behavior State} \\
+      q & \in & \textit{List Message}
     \end{array}
   \end{displaymath}
-  \caption{Configuration}\label{expr:formalization:config}
+  \caption{構文}\label{expr:formalization:config}
 \end{figure}
 
 
-\begin{figure}[t]
+\begin{figure}[t]\centering
   \begin{displaymath}
     \begin{array}{rcl}
-      (I \uplus \{(n_{\textrm{to}}, n_{\textrm{from}}, m)\}, A \cup \{(n_{\textrm{to}}, \textsf{become}(b), g)\}) &
-      \overset{\textsf{Receive}(n_{\textrm{to}}, n_{\textrm{from}}, m)}{\leadsto} &
-      (I, A \cup \{(n_{\textrm{to}}, b(m), g)\})
-      \hfill \textsc{(Receive)} \\[1ex]
+      c \cup \{(n_{\textrm{to}}, \textsf{become}(s), g, t, q)\} &
+      \overset{\textsf{Receive}(n_{\textrm{to}}, m)}{\leadsto} &
+      c \cup \{(n_{\textrm{to}}, t(s)(m), g, t, q)\}
+      \hfill \textsc{(Receive)} \\[2ex]
 
-      (I, A \cup \{(n_{\textrm{from}}, \textsf{send}(n_{\textrm{to}}, m, \alpha), g)\}) &
+      c \cup \{(n_{\textrm{from}}, \textsf{send}(n_{\textrm{to}}, m, \alpha), g, t, q),
+      & &
+      c \cup \{(n_{\textrm{from}}, \alpha, g, t, q), \\
+      (n_{\textrm{to}}, \alpha', g', t', q')\} &
       \overset{\textsf{Send}(n_{\textrm{from}}, n_{\textrm{to}}, m)}{\leadsto} &
-      (I \uplus \{(n_{\textrm{to}}, n_{\textrm{from}}, m)\}, A \cup \{(n_{\textrm{from}}, \alpha, g)\}) \\
-      & & \hfill \textsc{(Send)} \\[1ex]
+      \hspace{5ex} (n_{\textrm{to}}, \alpha', g', t', q' \doubleplus [m])\}
+      \hfill \textsc{(Send)} \\[2ex]
 
-      (I, A \cup \{(n, \textsf{new}(b, \kappa), g)\}) &
+      & & c \cup \{(n, \kappa(n'), g + 1, t, q), \\
+      c \cup \{(n, \textsf{new}(t', s, \kappa), g, t, q)\} &
       \overset{\textsf{New}(n')}{\leadsto} &
-      (I, A \cup \{(n, \kappa(n'), g + 1), (n', \textsf{become}(b), 0)\}) \\
-      & & \hfill \textrm{where}\ n' := \textsf{generated}(g, n) \\
-      & & \hfill \textsc{(New)} \\[1ex]
+      \hspace{5ex} (n', \textsf{become}(s), 0, t', [])\} \\
+      & & \textrm{where}\ n' := \textsf{generated}(g, n)
+      \hfill \textsc{(New)} \\[2ex]
 
-      (I, A \cup \{(n, \textsf{self}(\kappa), g)\}) &
+      c \cup \{(n, \textsf{self}(\kappa), g, t, q)\} &
       \overset{\textsf{Self}(n)}{\leadsto} &
-      (I, A \cup \{n, \kappa(n), g\})
+      c \cup \{(n, \kappa(n), g, t, q)\}
       \hfill \textsc{(Self)}
     \end{array}
   \end{displaymath}
-  \caption{labeled transition semantics}\label{expr:formalization:semantics}
+  \caption{ラベル付き遷移システム}\label{expr:formalization:semantics}
 \end{figure}
 
 
@@ -260,8 +261,3 @@ Finally, we can prove name uniqueness.
   \end{displaymath}
 \end{theorem}
 This is obvious by trans invariant preservation star because \texttt{no\_dup} is in \texttt{trans\_invariant}.
-
-
-\section{障害と回復の形式化}
-
-\section{Fairnessの形式化}
