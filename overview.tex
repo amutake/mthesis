@@ -1,8 +1,9 @@
 \chapter{検証ライブラリActario}
 \label{chapter:overview}
 
-本章では、本研究で作成したアクターシステムの検証ライブラリであるActarioについての概要を説明する。
-Actarioでは、
+Actarioとは、本研究で作成したアクターシステムの検証用ライブラリである。
+Actarioは、1. アクターシステムを記述するための型と記法、2. アクターシステムの仕様を記述するための関数、3. アクターシステムが仕様を満たすことを証明するためのタクティク、4. 記述したアクターシステムをErlangに変換するための抽出機構、の4つを持っている。
+本章では、階乗を計算するアクターシステムについてActarioの概要と利用方法について説明していく。
 
 \section{概要}
 
@@ -30,13 +31,15 @@ Actarioを実際にどのように使うかを説明する。
 このアクターシステムは、単に一つのアクターのなかで階乗を計算するのではなく、
 「次に何を掛けるか」という継続を持っているアクターを生成していき、
 継続を持っているアクターが数珠つなぎのようにメッセージを送信することで、階乗を計算する。
+
 図\ref{img:overview:fact}はこのアクターシステムに$3$を与えたとき、つまり$3!$を計算するときのシステムの動きを表した図である。
+実践の矢印はメッセージの送信を表し、破線の矢印はアクターの生成、そして縦の線は各アクターの時系列を表している。
 
 \begin{figure}[tp]
   \centering
   \includegraphics[width=15cm]{./img/overview/fact.pdf}
   \label{img:overview:fact}
-  \caption{fact 3}
+  \caption{$3!$を計算する際のシステムの動き}
 \end{figure}
 
 Actarioを用いると階乗計算アクターシステムは図\ref{code:overview:fact-impl}のように記述することができる。以下でコードの説明を行う。
@@ -95,7 +98,7 @@ Actarioではアクターモデルのアクションとして\coqi{new}、\coqi{
 \coqi{new}はアクターを生成するアクションである。振る舞いのテンプレート、初期状態、そして生成したアクターの名前を受け取って残りのアクションの列になるような継続となる関数を受け取る。
 \coqi{send}はメッセージを送信するアクションである。送り先の名前と送りたいメッセージと残りのアクションの列を受け取る。
 \coqi{self}は自分自身の名前を得るためのアクションである。自分自身の名前を受け取って残りのアクションの列になるような継続と成る関数を受け取る。
-\coqi{become}は自分自身の状態を受け取った状態に変え、次のメッセージの待ち状態になるアクションである。\coqi{become}のみ、残りのアクションの列を受け取らないのは、アクションの列の最後は必ず\coqi{become}になるようにするためである。
+\coqi{become}は自分自身の状態を引数として受け取った状態に変え、次のメッセージの待ち状態になるアクションである。\coqi{become}のみ、残りのアクションの列を受け取らないのは、アクションの列の最後は必ず\coqi{become}になるようにするためである。
 
 \begin{figure}
   \lstinputlisting{./code/overview/actions.v}
@@ -164,7 +167,7 @@ Qed.
 
 ActarioはErlangへのコード抽出機構も持っているため、
 定義したアプリケーションをErlangに変換して実行させることもできる。
-図\ref{code:overview:extraction}のコマンドを実行すると、\coqi{factorial_behv}のErlang実装が\texttt{factorial.erl}というファイル名で吐き出される。
+図\ref{code:overview:extraction}のコマンドを実行すると、\coqi{factorial_behv}のErlang実装が図\ref{code:overview:fact-impl-erl}のようなコードで\texttt{factorial.erl}というファイル名で吐き出される。
 これに対して、図\ref{code:overview:run}といったようなコードで変換されたアクターシステムを起動させると、実際にアクターシステムを実行することができる。
 
 \begin{figure}[tp]
@@ -176,7 +179,13 @@ ActorExtraction "factorial" factorial_behv.
 \end{figure}
 
 \begin{figure}
-\begin{lstlisting}
+  \lstinputlisting[language=Erlang]{./code/overview/fact_impl.erl}
+  \label{code:overview:fact-impl-erl}
+  \caption{Erlangに抽出されたアクターシステム}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=Erlang]
 -module(fact_main).
 -export([fact/1]).
 
@@ -198,5 +207,5 @@ int2nat(N) when N > 0 -> {s, int2nat(N - 1)};
 int2nat(_) -> {o}.
 \end{lstlisting}
 \label{code:overview:run}
-\caption{証明}
+\caption{抽出したアクターシステムを起動するErlangコード}
 \end{figure}
