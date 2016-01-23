@@ -204,6 +204,10 @@ Actarioではこれを以下のように定義することで実現している�
 \end{displaymath}
 \end{definition}
 
+この\coqi{gen_fresh}が成り立っていれば必ず一意な名前を生成するということを確かめる。
+
+
+
 %% It is guaranteed that the actor name generated in the next is fresh if satisfying \texttt{gen\_fresh} predicate by the relation of next generation numbers and actor names. %% For each actor in the configuration, if its parent is in the configuration, the next generation number of the parent actor is greater than the generation number of the name of the child actor.
 %% However, the actor name generated after the next is not always fresh name.
 %% For example, if there are two actors ($A$ and $B$) that have the same name and the same next generation number and actor $A$ generates a child actor and actor $B$ generates a child actor, although \texttt{gen\_fresh} holds, these child actors have the same name.
@@ -214,7 +218,6 @@ Actarioではこれを以下のように定義することで実現している�
 例えば、同じ名前でかつ次の生成番号も同じという2つのアクターがいた場合、まず片方のアクターが生成するアクターの名前は fresh だが、その次にもう片方のアクターがアクターを生成したとすると、名前が被ってしまう。
 また、親アクターがシステム内に存在せずに、親の親は存在しているという場合、親の親が次に生成するアクターの名前は被らないが、その子アクターが次に生成する名前は被ってしまう可能性がある。
 
-この\coqi{gen_fresh}が成り立っていれば確かに
 
 %% Thus, to prove \textit{gen fresh preservation} proposition that \texttt{gen\_fresh} is preserved between transitions, it is necessary to use \texttt{chain} and \texttt{no\_dup} as hypotheses.
 %% The proof is by ...

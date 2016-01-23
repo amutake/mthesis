@@ -1,4 +1,4 @@
-Require Import Actario.syntax Actario.semantics.
+Require Import Actario.syntax.
 
 Inductive ContState : Set :=
 | val_cust : nat -> name -> ContState
@@ -17,13 +17,13 @@ Definition factorial_cont_behv (state : ContState)
 Definition factorial_behv (state : unit) : behavior unit :=
   receive (fun msg =>
     match msg with
-    | tuple_msg (nat_msg 0) (name_msg cust) =>
-      cust ! nat_msg 1;
-      become tt
     | tuple_msg (nat_msg (S n)) (name_msg cust) =>
       cont <- new factorial_cont_behv with (val_cust (S n) cust);
       me <- self;
       me ! tuple_msg (nat_msg n) (name_msg cont);
+      become tt
+    | tuple_msg (nat_msg 0) (name_msg cust) =>
+      cust ! nat_msg 1;
       become tt
     | _ => become tt
     end).
