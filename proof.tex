@@ -8,7 +8,7 @@
 最後に遷移パスをつかって証明を行う方法について説明する。
 
 \section{\fairness の形式化}
-\fairness とは、アクターモデルが持つ性質で、遷移しうるラベルは必ずいつかそのラベルで遷移するというものである。
+\fairness とは、アクターモデルが持つ性質で、無限にしばしば遷移しうるラベルは必ずいつかそのラベルで遷移するというものである。
 アクターモデルでは必ず\fairness が成り立っており、これを前提としなければ証明できない性質もあるため、まず\fairness の形式化を行う。
 また、\fairness を形式化する際に使う、この先いつかある事柄が成り立つ、というような述語はActarioの証明機構でも使っているので、その説明も行う。
 
@@ -22,83 +22,108 @@
 値域はそのインデックスに対応する配置を表す。\texttt{config}型ではなく\texttt{option config}型になっているのは、これ以上遷移ができないパスも表したいからである。つまり、これ以上遷移ができない配置のインデックスを$n$とすると、$\forall m > 0, n + m$に遷移パス関数を適用した結果は\texttt{None}になる。
 
 \begin{figure}[tp]
-  \begin{lstlisting}
-    Definition path := nat -> option config.
-  \end{lstlisting}
+\begin{lstlisting}
+Definition path := nat -> option config.
+\end{lstlisting}
   \label{code:formalization:path}
   \caption{遷移パスの定義}
 \end{figure}
 
-また、与えられた遷移パスが確かに遷移パスとしての仕様を満たしているか、という述語を定義する(図~\ref{code:formalization:path-spec})。
+また、遷移パスの仕様を、パスに対する制約の形で定義する(図\ref{code:formalization:path-spec})。
 すべてのインデックス$i$について、$i$番目の配置が存在するならば、$i+1$番目の配置が存在するならそれは遷移できるものか、それ以上遷移できない。$i$番目の配置が存在しないならば、その次の配置も存在しない、という意味である。
 
 \begin{figure}[tp]
-  \begin{lstlisting}
+\begin{lstlisting}
 Definition is_transition_path (p : path) : Prop :=
-  forall n,
-    (forall c, p n = Some c ->
-      (exists c' l, p (S n) = Some c' /\
-        c ~(l)~> c') \/
-      p (S n) = None) /\
-    (p n = None -> p (S n) = None).
-  \end{lstlisting}
+  forall i,
+    (forall c, p i = Some c ->
+       ((forall c' l, ~ (c ~(l)~> c')) -> p (S i) = None) \/
+       (exists c', p (S i) = Some c' -> exists l, c ~(l)~> c')) /\
+    (p i = None -> p (S i) = None).
+\end{lstlisting}
   \label{code:formalization:path-spec}
   \caption{遷移パスの仕様}
 \end{figure}
 
-\subsection{遷移可能性}
-次に、与えられた配置が与えられたラベルでもって遷移ができるという述語を定義する。これを遷移可能性(enabled)と呼ぶ。
-Actarioでは、遷移可能性はある配置からあるラベルによって遷移した先の配置が存在すると定義する (図~\ref{code:formalization:enabled})。
+配置はアクターの集合であるため、本来はその中でアクターの順序はない。しかし、Actarioでの定義はアクターのリストになっており、順序がある。
+ラベル付き遷移システムの各遷移の定義(付録\ref{appendix:trans})では入れ替えて等しいものとしているため、遷移パスの各配置も順序を入れ替えられるようにしてよい。
+この命題は以下のようになるが、遷移パスは実際には関数であるためこの命題は証明できない(関数の返り値は引数に応じて一意に決まるため)。
+よってこれは公理とする(図\ref{code:proof:path-perm})。
+
+\begin{displaymath}
+  \begin{array}{l}
+    \forall c, c' \in \textit{Configuration}, permutation(c, c') \rightarrow \\
+    \quad \forall p \in \textit{Path}, \forall i \in \mathbb{N}, \\
+    \quad \quad \quad p(i) = c \rightarrow p(i) = c'
+  \end{array}
+\end{displaymath}
 
 \begin{figure}[tp]
-  \begin{lstlisting}
-Definition enabled (c : config) (l : label) : Prop := exists c', c ~(l)~> c'.
-  \end{lstlisting}
-  \label{code:formalization:enabled}
-  \caption{遷移可能性}
+\begin{lstlisting}
+Axiom path_perm :
+  forall p i c c',
+    is_transition_path p ->
+    Permutation c c' ->
+    p i = Some c ->
+    p i = Some c'.
+\end{lstlisting}
+  \label{code:proof:path-perm}
+  \caption{遷移パスの配置の入れ替え}
 \end{figure}
 
-\subsection{Infinitely Often Enabled}
-無限にしばしば遷移可能になる
-We define the predicate that the transition is infinitely often enabled in the transition path.
-It is named \texttt{infinitely often enabled}.
-%% これは、すべての index n について、n 番目の configuration があるラベルによって遷移が可能ならば、その先そのラベルによって遷移が可能になる configuration が存在する、と定義する。
+\subsection{\enabled}
+次に、与えられた配置が与えられたラベルでもって遷移ができるという述語を定義する。これを\emph{\enabled (enabled)}と呼ぶ。
+Actarioでは、\enabled はある配置からあるラベルによって遷移した先の配置が存在すると定義する (図\ref{code:formalization:enabled})。
 
+\begin{figure}[tp]
 \begin{lstlisting}
-Definition infinitely_often_enabled
-    (l : label) (p : path) : Prop :=
-  forall n c, p n = Some c ->
+Definition enabled (c : config) (l : label) : Prop :=
+  exists c', c ~(l)~> c'.
+\end{lstlisting}
+  \label{code:formalization:enabled}
+  \caption{\enabled}
+\end{figure}
+
+\subsection{Inifinitely Often Enabled}
+次に、無限にしばしば\enabled になるという述語infinitely often enabledを定義する(図\ref{code:proof:infinitely-often-enabled})。
+これは、すべてのインデックス$i$について、$i$番目の配置があるラベルによって遷移可能であるならば、その先そのラベルによって遷移が可能になる配置が存在する、という意味である。
+
+\begin{figure}
+\begin{lstlisting}
+Definition infinitely_often_enabled (l : label)
+                                    (p : path) : Prop :=
+  forall i c, p i = Some c ->
     enabled c l ->
-    exists m c', m > n /\
-      p m = Some c' /\
+    exists i' c',
+      i < i' /\
+      p i' = Some c' /\
       enabled c' l.
 \end{lstlisting}
-
+\label{code:proof:infinitely-often-enabled}
+\caption{infinitely often enabled}
+\end{figure}
 
 \subsection{Eventually Processed}
-We define \texttt{eventually processed} that is the predicate of label and transition path.
-It represents that the transition with the label is processed eventually in the path.
-It is defined as follows.
+次に、いつかあるラベルによって遷移が起きるという述語eventually processedを定義する(図\ref{code:proof:eventually-processed})。
+これはこの遷移パス内でラベル$l$による遷移が存在するという意味である。
 
+\begin{figure}
 \begin{lstlisting}
-Definition eventually_processed
-    (l : label) (p : path) : Prop :=
+Definition eventually_processed (l : label) (p : path) : Prop :=
   exists n c c',
-    p n = Some c /\
-    p (S n) = Some c' /\
-    c ~(l)~> c'.
+    p n = Some c /\ p (S n) = Some c' /\ c ~(l)~> c'.
 \end{lstlisting}
+\label{code:proof:eventually-processed}
+\caption{eventually processed}
+\end{figure}
 
 
 \subsection{Fairness}
-\texttt{fairness}という制約は、図\ref{code:formalization:fairness}のように定義できる。
-
-任意の遷移パス
-For the given transition path and for each label, if \texttt{infinitely often enabled} holds, then \texttt{eventually processed} holds.
-\texttt{is\_postfix\_ of} という述語は、無限を表すために使われており、。
-
-If \texttt{is postfix of} is not used, the transition may not be processed after the transition is processed although the transition is processed in whole the path.
-To prevent it, if \texttt{inifinitely often enabled} holds then \texttt{eventually processed} holds for arbitrary postfix path by using \texttt{is postfix path}.
+以上を使って、\fairness は図\ref{code:formalization:fairness}のように定義できる。
+任意の遷移パスと任意のラベルにおいて、もし無限にしばしばそのラベルで遷移可能になるならば、いつかはそのラベルでの遷移が起きるという意味である。
+なお、\coqi{is_postfix_of}という述語は、あるパスがあるパスのはじめの$n$回の遷移を除いたものであり、\fairness の定義においてはこれから先常にこれが成り立つことを表すために使われている。
+もし\coqi{is_postfix_of}がなければ、そのパス全体ではあるラベルで遷移が起こることは保証されるが、遷移が起こったあとは無限にしばしば遷移可能になっても遷移しないようなパスも許される。
+これを防ぐために、\coqi{is_postfix_of}を用いて、実際に遷移が起きてもその先無限にしばしば遷移可能になることがあればその部分でもいつかは遷移が起きるということを強制している。
 
 \begin{figure}
 \begin{lstlisting}
@@ -117,23 +142,40 @@ Definition fairness : Prop :=
 
 \section{命題の定義}
 
-アクターモデルのアプリケーションの性質を表す際に便利な述語を、前節で定義した\coqi{eventually_processed}を使って定義する。
+本節では、アクターモデルによるシステムの性質を記述するための述語について説明する。
+アクターシステムの性質を表す際に便利な述語を、前節で定義した\coqi{eventually_processed}を使って定義する。
+アクターモデルによって構成されたシステムは、何回遷移が起きるかわからないがいつかはこの状態になってほしい、もしくはこのアクションが実行される、というような性質を検証したいことが多い。
+よって図\ref{code:proof:ev-do-label}のように、初期状態とラベルの述語とする。
+
+\begin{figure}
+\begin{lstlisting}
+Definition eventually_do_label (c0 : config) (l : label) :=
+  forall p : path,
+    p 0 = Some c0 ->
+    is_transition_path p ->
+    eventually_processed l p.
+\end{lstlisting}
+\label{code:proof:ev-do-label}
+\caption{性質に関する述語の定義}
+\end{figure}
 
 \section{遷移可能なラベルと遷移後の配置の計算}
 
-証明の方針としては、
-配置から遷移可能なラベルの集合、配置から各ラベルによって遷移した後の配置は決定可能であることに着目する。
-関数として定義する理由は、遷移可能なラベルと遷移後の配置を計算可能にすることによって、ユーザが配置の内容を書き出さずに遷移パスを追えるようにするためである。
-これはSsreflectの考え方と同一である。
+アクターシステムの性質の証明は、初期状態から考えられる遷移を一つずつ追っていくという方針にする。
+しかし、素朴に一つずつの遷移を追うと、ユーザーが遷移毎に遷移前の配置から遷移後の配置を予想して書き出す必要が出てしまう。
+こうすると証明が非常に煩雑になってしまうため、配置から遷移可能なラベルの集合、配置から各ラベルによって遷移した後の配置は決定可能であることに着目し、まず遷移前の配置から遷移可能なラベルの集合を計算し、その各ラベルで遷移した後の配置を計算することで、ユーザが配置の内容を書き出さずとも、遷移パスを追いやすくする。
+このように計算可能な形にすることは、Microsoft Researchによって開発されており四色定理の証明などに使われているCoqの拡張ライブラリであるSsreflect\cite{ssreflect}の考え方と同一である。
 
 \subsection{遷移可能なラベルの計算}
 
-(TODO)
+まず遷移可能なラベルの集合の計算について説明する。
 配置はアクターの集合として表されており、また、\ref{chapter:formalization}で説明したように、各アクターの名前は必ず一意となる。
 ラベルはアクター型の\coqi{remaining_actions}フィールドにある\coqi{actions}型の値に一対一になっているため、各アクターはアクションを行って遷移を行うか、遷移できないかのどちらかになる。
 よって、配置からラベルの集合への関数を作ることができる。
 この関数を\coqi{possible_labels}と呼ぶことにする。
 \coqi{possible_labels}の定義は図\ref{code:proof:possible-labels}のようになる。\coqi{cat_options}はヘルパー関数で、\coqi{option A}型のリストを、\coqi{Some}の場合だけ抜き出したようなリストに変換する関数である。
+\coqi{possible_labels}の計算結果のラベルのリストが遷移可能なラベルとして網羅されているということはまだ証明できておらず、今後の課題となっている。
+
 
 \begin{figure}
 \begin{lstlisting}
@@ -162,19 +204,26 @@ Definition possible_labels (c : config) : seq label :=
 \caption{\coqi{possible_labels}の定義}
 \end{figure}
 
-計算結果のラベルのリストが確かに網羅されているかということは、まだ証明できておらず、今後の課題となっている。
-
 \subsection{遷移後の配置の計算}
 
-ラベルとそのラベルによって遷移した後の配置は集合として同型となるものを除いて一意となるため、関数として定義できる。
+あるラベルによって遷移した後の配置の計算について説明する。
+ラベルとそのラベルによって遷移した後の配置は集合として同型となるものを除いて一意となるため、集合として同型なもののなかの一つを選択するようにすれば、これも関数として定義できる。
+この関数を\coqi{calc_trans}と呼ぶ。
+関数定義は少々煩雑なため付録\ref{appendix:calc-trans}にある。
+\coqi{calc_trans}の計算結果の配置が確かにもとの配置からそのラベルによって遷移したものになっているということはまだ証明できておらず、今後の課題となっている。
 
-関数定義は煩雑であるため載せない。
-
-計算結果の配置が確かにもとの配置からそのラベルによって遷移したものになっているということはまだ証明できておらず、今後の課題となっている。
+\section{証明の方針}
 
 \subsection{trace path}
 
-遷移パスを追うための補題を用意する。
+\lstinline{possible_labels}、\lstinline{calc_trans}を使って遷移パスを追うための補題を用意する。
+これは、ある遷移パスについて、$i + 1$番目の配置は$i$番目の配置から遷移可能であるもののいずれかである、という意味である。
+$i$番目の配置はその配置から計算されたラベルのリストのどれかで遷移するはずであるので、結論部分はそのすべてを選言によって結合したものになっている。
+もしラベルのリストが空ならば、次の配置はない。
+この際、集合としては同型でもリストとしては異なるものは除かれており、厳密に遷移後のパスが網羅されているわけではないが、図\ref{code:proof:path-perm}の\coqi{path_perm}によってこの問題は考えなくてよくなっている。
+この補題を使うと、遷移パスの制約の追加をCoqの計算に任せることができる。
+また、この補題もまだ証明されておらず、今後の課題となっている。
+
 
 \begin{figure}
 \begin{lstlisting}
@@ -197,11 +246,36 @@ Lemma trace_path :
 \caption{\coqi{trace_path}の定義}
 \end{figure}
 
-これは、ある遷移パスについて、$i + 1$番目の配置は$i$番目の配置から遷移可能であるもののいずれかである、という意味である。
-この際、集合としては同型でもリストとしては異なるものは除かれており、厳密に遷移後のパスが網羅されているわけではないが、\coqi{path_perm}によってこの問題は考えなくてよくなっている。
+\subsection{タクティク}
 
-この補題を使うと、遷移パスの制約の追加をCoqの計算に任せることができる。
+Actarioが提供する、遷移パスを使った証明に便利なタクティクについて説明する。
+図\ref{code:proof:tactics}はタクティクの定義である。
+まず\coqi{step}というタクティクは、あるパスが遷移パスになっているという前提と、そのパスの$i$番目の配置が$c$であるという前提から、$i + 1$番目としてありうる配置を計算し前提に加えるというものである。これは\coqi{trace_path}を使っている。
+\coqi{step_until_stop}は、これ以上遷移できなくなるまで遷移を追っていき、その際に得たパスに対する制約をすべて前提に加えるというものである。遷移が無限に続く場合はタクティクの実行は終わらない。
+\coqi{found}は、パスの$i$番目から$i + 1$番目に遷移する際に、証明したいラベルによって遷移が起きたことがわかったときに使い、証明を終わらせることができる。
 
-\section{証明}
+\begin{figure}
+\begin{lstlisting}
+Ltac step p_is_path p :=
+  move/(_ _ _ _ p_is_path p): trace_path;
+  rewrite/calc_trans/=.
 
-TBD
+Ltac step_until_stop is_path p0 :=
+  let P := fresh "p" in
+  try (progress step is_path p0=> P; step_until_stop is_path P).
+
+Ltac found i p p' :=
+  exists i; eexists; eexists;
+    split; last split; [ apply p | apply p' | ];
+    (eapply trans_receive || eapply trans_send ||
+      eapply trans_new || eapply trans_self);
+    apply/Permutation_refl.
+\end{lstlisting}
+\label{code:proof:tactics}
+\caption{タクティク}
+\end{figure}
+
+\subsection{証明の方法}
+
+非決定的な遷移をせずかつ遷移が無限に続かないような場合は\coqi{step_until_stop}タクティクを実行し\coqi{found}タクティクによって証明を終わらせることができる。
+非決定的な遷移があるか遷移が無限に続くような場合は\coqi{step}によって遷移を追っていく。
