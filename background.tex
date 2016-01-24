@@ -104,7 +104,7 @@ Qed.
 
 CoqにはOCaml, Haskell, Schemeへのコード抽出器がデフォルトで内蔵されている。
 抽出器はプラグインの形で実装されており、Coqの型定義・関数定義からMiniMLというMLのサブセットにあたるような言語の抽象構文木に一旦変換され、そこから各言語に変換される。
-上の\coqi{reverse}関数をOCamlに向けて変換すると、図\ref{code:background}のようになる。\coqi{Extraction}コマンドでその関数を抽出することができる。
+上の\coqi{reverse}関数をOCamlに向けて変換すると、図\ref{code:background:reverse-erl}のようになる。\coqi{Extraction}コマンドでその関数を抽出することができる。
 \coqi{Recursive Extraction}コマンドを使うとその関数が依存している型と関数も抽出される。
 
 \begin{figure}
@@ -116,7 +116,7 @@ Extraction reverse.
  * | Cons (hd, tl) -> app (reverse tl) (Cons (hd, Nil))
  *)
 \end{lstlisting}
-\label{code:background:reverse-reverse}
+\label{code:background:reverse-erl}
 \caption{\coqi{reverse}の抽出}
 \end{figure}
 
