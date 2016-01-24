@@ -2,15 +2,15 @@
 
 \section{アクターモデル}
 
-アクターモデルとは、非同期メッセージパッシングに基づいた並行計算のモデルである。
+アクターモデル\cite{}とは、非同期メッセージパッシングに基づいた並行計算のモデルである。
 アクターと呼ばれる並行計算の主体が互いにメッセージを送り合うことで計算を進める。
 対象となるアクターの名前を指定することでメッセージを送信する。
 
 
 \subsection{振る舞い}
 
-振る舞い(behavior)とは、アクターがメッセージを受け取って何をするかというものである。
-この「何をするか」という部分をアクターのアクション(action)と呼ぶ。
+\emph{振る舞い(behavior)}とは、アクターがメッセージを受け取って何をするか、というものである。
+この「何をするか」という部分をアクターの\emph{アクション(action)}と呼ぶ。
 アクターのアクションには以下の3つのものがある。
 
 \begin{itemize}
@@ -22,45 +22,115 @@
 
 \subsection{配置}
 
-配置(configuration)とは、システムの状態のスナップショットのことである。
+\emph{配置(configuration)}とは、システムの状態のスナップショットのことである。
 その時点でのアクターおよびまだ受け取られていないメッセージの集合から構成される。
 
 \subsection{アクターの名前}
 
-アクターがメッセージを送信する際に指定する宛先のことをアクターのアドレスまたはアクターの名前という。これ以降この論文ではアクターの名前で統一する。
+アクターがメッセージを送信する際に指定する宛先のことをアクターの\emph{アドレス}またはアクターの\emph{名前}という。これ以降この論文ではアクターの名前で統一する。
 アクターモデルではアクターの名前を指定してメッセージを送信するため、アクターの名前が一意であるという性質はアクターモデルの一貫性のために非常に重要なものとなっている。
+
+\subsection{\fairness}
+
+アクターモデルでは\fairness という性質が必ず成り立つ。
+\fairness とは、無限にしばしばあるアクターがあるアクションを実行できる状態にあるならば、いつかそのアクションは実行される、というものである。
+
+これが成り立たなければ、例えばあるアクターAとアクターA'が無限に相互通信を行うようなアクターシステムと、あるアクターBとアクターB'が無限に相互通信を行うようなアクターシステムを合成すると、アクターAとアクターA'のみ通信し、アクターBとアクターB'の通信は起きないということが起こりえる。
+このような状況を防ぐためにも、\fairness は重要である。
 
 
 \section{定理証明支援系 Coq}
 
 Coqとは、フランス国立情報学自動制御研究所(INRIA)で開発が進められている定理証明支援系と呼ばれるシステムの一つである。
 定理証明支援系とは人間が形式的な形で証明を書きやすいように支援するシステムのことである。
-定理証明支援系Coqでは以下のことが行える。
+Coqでは以下のことが行える。
 
 \begin{itemize}
 \item プログラムの仕様の検証や数学的な命題の証明
 \item 型理論に基づいた証明の機械的なチェック
 \item タクティクと呼ばれる証明の方針を記述していくためのコマンドによる柔軟な証明記述
 \item プラグインシステムによる拡張
-\item 他の言語へのコード抽出
+\item 他の言語へのコード抽出(extraction)
 \end{itemize}
+
+例として、ある型\coqi{A}のリストを逆順にする関数\coqi{reverse}を考える。\coqi{reverse}は図\ref{code:background:reverse}のように定義できる。
+
+\begin{figure}
+\begin{lstlisting}
+Fixpoint reverse (l : list A) :=
+  match l with
+  | [] => []
+  | hd :: tl => reverse tl ++ [hd]
+  end.
+\end{lstlisting}
+\label{code:background:reverse}
+\caption{\coqi{reverse}関数の定義}
+\end{figure}
+
+リストを逆順にする関数\coqi{reverse}は、二度適用するともとのリストに戻るという性質を持っているので、ここで定義した関数がその声質を満たしているということを確かめるために、証明を行う(証明できなければここで定義した関数は間違った実装になっているということになる)。
+Coqでのこの定理の証明は図\ref{code:background:reverse-reverse}のようになる。
+ここでは補題\coqi{snoc_reverse}と目的の定理\coqi{reverse_reverse_id}を証明している。
+\coqi{Lemma}および\coqi{Theorem}の後ろが命題の名前と命題を表す式になっており、
+\coqi{Proof}から\coqi{Qed}までが命題を証明している部分である。証明の部分に書かれているコマンド(\lstinline{intros} や\coqi{induction}などのこと)は証明を進めていく際の方針を表すものであり、これを\emph{タクティク}と呼ぶ。
+
+\begin{figure}
+\begin{lstlisting}
+Lemma snoc_reverse : forall a l, reverse (l ++ [a]) = a :: reverse l.
+Proof.
+  intros a l.
+  induction l as [ | a' l ].
+  - reflexivity.
+  - rewrite IHl; reflexivity.
+Qed.
+
+Theorem reverse_reverse_id :
+  forall l : list A, reverse (reverse l) = l.
+Proof.
+  intros l.
+  induction l as [ | a l ].
+  - reflexivity.
+  - rewrite snoc_reverse.
+    rewrite IHl.
+    reflexivity.
+Qed.
+\end{lstlisting}
+\label{code:background:reverse-reverse}
+\caption{\coqi{reverse}を二度適用するともとのリストに戻ることの証明}
+\end{figure}
+
 
 \subsection{コード抽出}
 
 CoqにはOCaml, Haskell, Schemeへのコード抽出器がデフォルトで内蔵されている。
-抽出器はプラグインの形で実装されており、
-
-\subsection{基本的な構文}
+抽出器はプラグインの形で実装されており、Coqの型定義・関数定義からMiniMLというMLのサブセットにあたるような言語の抽象構文木に一旦変換され、そこから各言語に変換される。
+上の\coqi{reverse}関数をOCamlに向けて変換すると、図\ref{code:background}のようになる。\coqi{Extraction}コマンドでその関数を抽出することができる。
+\coqi{Recursive Extraction}コマンドを使うとその関数が依存している型と関数も抽出される。
 
 \begin{figure}
+\begin{lstlisting}
+Extraction reverse.
+(** =>
+ * let rec reverse = function
+ * | Nil -> Nil
+ * | Cons (hd, tl) -> app (reverse tl) (Cons (hd, Nil))
+ *)
+\end{lstlisting}
+\label{code:background:reverse-reverse}
+\caption{\coqi{reverse}の抽出}
 \end{figure}
-これを型コンストラクタと呼ぶ。型を受け取って型を返すような関数とも見れる。
-これを値コンストラクタと呼ぶ。何か値を受け取って、値コンストラクタの型の値を返すような関数とも見れる。
+
+%% \subsection{基本的な構文}
+
+%% \begin{figure}
+%% \end{figure}
+%% これを型コンストラクタと呼ぶ。型を受け取って型を返すような関数とも見れる。
+%% これを値コンストラクタと呼ぶ。何か値を受け取って、値コンストラクタの型の値を返すような関数とも見れる。
 
 \section{Erlang}
 
-Erlang\cite{erlang}は高可用なシステムを作るために作られたプログラミング言語である。
-並行計算のモデルとしてアクターモデルを採用している。Erlangにおいて、並行計算の主体はプロセスと呼ばれる。
+Erlang\cite{erlang}は高可用なシステムを作るために作られた動的型付き関数型プログラミング言語である。
+並行計算のモデルとしてアクターモデルを採用している。
+Erlangにおいて、並行計算の主体はアクターではなくプロセスと呼ばれる。
 
 \subsection{基本的な構文}
 
@@ -70,13 +140,15 @@ Erlang\cite{erlang}は高可用なシステムを作るために作られたプ�
 \item[変数]\mbox{}\\
   大文字から始まる識別子は変数である。Erlangでは変数は不変であり、再代入することはできない。
 \item[アトム]\mbox{}\\
-  小文字から始まる識別子はアトム(atom)と呼ばれるシンボルである。
+  小文字から始まる識別子は\emph{アトム(atom)}と呼ばれるシンボルである。
 \item[組]\mbox{}\\
   波括弧で囲まれ、カンマで句切られた項は組(tuple)である。例えば\lstinline|{Var, atom, 42}|は変数\lstinline{Var}、アトム\lstinline{atom}、数値\lstinline{42}の組である。
 \item[関数]\mbox{}\\
-  同じ関数名で、異なった数の引数をとるような関数も定義できる。
-  関数名の後ろにスラッシュと数を書くと、その数の引数をとる関数と指定できる。
+  関数は\lstinline[language=Erlang]{$func$($arg1$, $\cdots$, $argn$) -> $expr$.}という形で定義する。
+  同じ関数名で、異なった数の引数をとるような関数も定義でき、関数を呼び出す側は関数名の後ろにスラッシュと数を書くと、その数の引数をとる関数と指定できる。
   これを関数のアリティという。
+\item[パターンマッチ]\mbox{}\\
+  \lstinline[language=Erlang]{case $expr$ of $pat1$ -> $expr1$; $\cdots$; $patn$ -> $exprn$ end.}という構文で式のパターンマッチを行うことができる。
 \end{description}
 
 \subsection{並行計算のための関数と構文}
@@ -86,8 +158,10 @@ Erlang並行計算の基本的な関数および構文について解説する�
 \begin{description}
 \item<\lstinline{spawn/1}>\mbox{}\\
   \lstinline{spawn/1}は新しいプロセスを作る関数である。新しいプロセスで行う処理が書かれた関数を受け取り、プロセスのIDを返す。\lstinline{spawn}関数はアリティが1から4までのものが定義されているが、本論文ではアリティが1のものだけを扱う。
-\item<\lstinline{send/2}>\mbox{}\\
-  \lstinline{send/2}は第一引数で指定したプロセスIDを持つプロセスに向けて、第二引数で指定した値を送信するという関数である。
+\item<\lstinline{self/0}>\mbox{}\\
+  \lstinline{self/0}は関数であり、この関数を呼び出したプロセスのIDを返す。
+\item<\lstinline{!}>\mbox{}\\
+  \lstinline{!}は二項演算子であり、左手で指定したプロセスIDを持つプロセスに向けて、右手で指定した値を送信するという構文である。
 \item<\lstinline{receive}>\mbox{}\\
   \lstinline{receive}はそのプロセスに向けて送られたメッセージを受け取り、パターンマッチを行う構文である。
 \end{description}
