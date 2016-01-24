@@ -75,7 +75,7 @@ Lemma possible_labels_cat :
 \ref{chapter:proof}で定義した\coqi{fairness}を使うためには、あるラベルが遷移可能になることが無限に繰り返されるようなパスであることを示す必要があり現状の証明機構では使いづらい。そのため、\coqi{fairness}を使いやすいようなタクティクなどの仕組みを作るか、\coqi{fairness}自体を同等または弱い性質でかつ扱いやすいものに定義し直す必要がある。
 
 \begin{figure}[tp]
-  \begin{lstlisting}
+\begin{lstlisting}
 (**
  * ping というメッセージを受け取ると、
  * pong というメッセージを送り主に送信する
@@ -108,17 +108,18 @@ Definition pingpong_system : config :=
     client2 ! empty_msg; (* クライアント1を走らせる *)
     become done (* それ以降は何もしない *)
   ).
-  \end{lstlisting}
+\end{lstlisting}
   \label{code:conclusion:pingpong}
   \caption{ping-pongシステム}
 \end{figure}
 
 \begin{figure}[tp]
-  \begin{lstlisting}
+\begin{lstlisting}
 Definition client1_name := generated 1 (toplevel "pingpong").
 Theorem receive_client1 :
-  eventually_receive pingpong_system (generated 1 top) (str_msg "pong").
-  \end{lstlisting}
+  eventually_receive pingpong_system
+    (generated 1 top) (str_msg "pong").
+\end{lstlisting}
   \label{code:conclusion:pingpong-spec}
   \caption{ping-pongシステムが満たすべき性質}
 \end{figure}
@@ -127,12 +128,12 @@ Theorem receive_client1 :
 本ライブラリの最終目標としては、障害が起こりうる環境においてもシステムの性質は成り立つというような命題に対して検証を行えるというものだったが、それはまだ達成できていない。
 これを達成するためには、まず障害を形式化し障害を含むような意味論にすること、障害から復旧させるような機構を導入すること、が挙げられる。
 
-障害を含むような意味論は図\ref{code:conclusion:failure}のようなものになると考えられる。
+%% 障害を含むような意味論は図\ref{code:conclusion:failure}のようなものになると考えられる。
 
-\begin{figure}
-\label{code:conclusion:failure}
-\caption{障害を含むような意味論}
-\end{figure}
+%% \begin{figure}
+%% \label{code:conclusion:failure}
+%% \caption{障害を含むような意味論}
+%% \end{figure}
 
 また、障害を含むような場合と障害を含まないような場合で分けて検証できるように、意味論を切り替えられるようにすることが必要である。
 この手法はVerdiが行っているもので、こうすることによって、ある障害については耐性があるが、別のある障害に対しては耐性がない、というようなことも検証できるようになる。
