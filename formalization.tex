@@ -7,8 +7,10 @@
 
 \section{意味論の形式化}
 
-アクターモデルの操作的意味をconfigurationのラベル付き遷移システムとして定式化する。
-これ以降用いる記号を図\ref{expr:formalization:config}と定義する。また、Actarioではこれは図\ref{code:formalization:config}と定義している。
+アクターモデルの操作的意味を配置のラベル付き遷移システムとして定式化する。
+これ以降用いる記号を図\ref{expr:formalization:config}と定義する。
+以下はその説明である。
+%% また、Actarioではこれは図\ref{code:formalization:config}と定義している。
 
 \begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
 \item[\textit{Configuration}]
@@ -16,7 +18,7 @@
 \item[\textit{Actor}]
   アクターを表す。アクターの名前、まだ実行していないアクションの列、生成番号、振る舞いのテンプレート、メッセージキューから成る。
 \item[\textit{Name}]
-  アクターの名前を表す。名前は、トップレベルのアクターか、生成されたアクターのどちらかであるかを表す。トップレベルのアクターとはつまり親アクターがいないアクターであり、システムの名称を表す文字列を引数にとる。また、トップレベルのアクターをトップレベルアクターと呼ぶ。生成されたアクターは、親アクターの名前と、その親アクターが何番目に生成したアクターかを表す自然数(これを世代番号と呼ぶ)を引数にとる。
+  アクターの名前を表す。名前は、トップレベルのアクターか、生成されたアクターのどちらかであるかを表す。トップレベルのアクターとはつまり親アクターがいないアクターであり、システムの名称を表す文字列を引数にとる。また、トップレベルのアクターをトップレベルアクターと呼ぶ。生成されたアクターは、親アクターの名前と、その親アクターが何番目に生成したアクターかを表す自然数を引数にとる。
 \item[\textit{Message}]
   メッセージは、アクターの名前、基本的なデータ型(自然数、文字列)、およびその組み合わせ(タプル)から構成される。
 \item[\textit{Behavior State}]
@@ -67,6 +69,26 @@
   \caption{Actarioでの記号の定義}
 \end{figure}
 
+以上の記号を用いてアクターモデルのラベル付き遷移システムは図\ref{expr:formalization:semantics}のように定式化できる。
+$\overset{l}{\leadsto}$は二項関係であり、左手の配置がラベル$l$によって右手の配置に遷移するということを表している。
+遷移関係は4つあり、それぞれ\textsf{Receive}ラベル、\textsf{Send}ラベル、\textsf{New}ラベル、\textsf{Self}ラベルによる遷移である。それぞれについての説明を以下に記す。
+
+\begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
+\item[$\textsf{Receive}(n_{\textrm{to}}, m)$]
+  $n_{\textrm{to}}$が自身のメッセージキューの先頭にある$m$というメッセージを受け取り、そのメッセージによってアクションの列を生成する遷移である。
+\item[$\textsf{Send}(n_{\textrm{from}}, n_{\textrm{to}}, m)$]
+  $n_{\textrm{from}}$から$n_{\textrm{to}}$に向けてメッセージ$m$を送信するという遷移である。
+  送信されたメッセージは即座に$n_{\textrm{to}}$のメッセージキューに入れられる。
+\item[$\textsf{New}(n')$]
+  $n'$という名前を持つアクター(ここでは子アクターと呼ぶ)を生成する遷移である。
+  生成するアクター(ここでは親アクターと呼ぶ)の名前と生成番号によって名前がつけられる。
+  親アクターは子アクターを生成した後、自身の生成番号を1増やす。
+  子アクターは生成番号が0、メッセージ待ち状態でメッセージキューは空の状態で生成される。
+\item[$\textsf{Self}(n)$]
+  $n$というアクターが自分自身の名前を得る遷移である。
+\end{description}
+
+
 \begin{figure}[t]\centering
   \begin{displaymath}
     \begin{array}{rcl}
@@ -101,82 +123,83 @@
 
 \section{名前付け}
 
-アクターの名前は一意になる。
+アクターモデルではメッセージ送信の際に宛先のアクターの名前を指定してメッセージを送るため、アクターの名前が一意になるという性質は重要である。
 一般的なアクターの実装では、一意な名前付けと名前の管理をするために、副作用を使った名前付けを行うことが多い。例えば、グローバル変数に自然数を持っておき、名前を生成する度にインクリメントする方法や、アクターのメモリのアドレスをアクターの名前にしてしまう方法がある。
 しかし、Coqのような副作用を記述できない純粋な言語では、一意な名前付けは問題になりやすい。
 Actarioでは、アクターの名前を、親の名前とその親が何番目に生成したアクターかを表す自然数のペアで表現することで、一意な名前付けを実現している。
 
-また、アクターが内部状態として持つ次に生成する番号を生成番号、アクターの名前に含まれる親アクターが何番目に生成した番号かという番号を世代番号と呼ぶ。
+本節ではこの操作的意味論に因る名前付けの方法よって生成された名前は必ず一意になるということを証明する。
+また、これ以降、アクターが内部状態として持つ次に生成する番号を\emph{生成番号}、アクターの名前に含まれる親アクターが何番目に生成した番号かという番号を\emph{世代番号}と呼ぶ。
 
 \subsection{名前の一意性の証明}
 
-この意味論と名前付けの方法によって生成された名前は必ず一意になるということを証明する。
-これを証明するために、名前に関する\textit{trans invariant}という遷移の間で変わらない性質を定義する。
-trans invariant は以下のように3つの述語\texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup}の組で定義される。
+生成された名前の一意性の証明に入る。
+これを証明するために、\emph{\transinv(trans invariant)}という遷移の間で変わらない名前に関する性質を定義する。
+\transinv は配置に関する述語であり、以下のように3つの述語\emph{\chain (chain)}, \emph{\fresh (gen fresh)}, \emph{\nodup (no\_dup)}の組で定義される。
 
+\begin{definition}{\transinv}
 \begin{displaymath}
   \begin{array}{l}
-    \texttt{trans\_invariant}(c) := \\
-    \quad \texttt{chain}(c) \wedge \texttt{gen\_fresh}(c) \wedge \texttt{no\_dup}(c)
+    \texttt{trans\_invariant}(c) :=
+    \texttt{chain}(c) \wedge \texttt{gen\_fresh}(c) \wedge \texttt{no\_dup}(c)
   \end{array}
 \end{displaymath}
+\end{definition}
 
 \texttt{chain}, \texttt{gen\_fresh}, \texttt{no\_dup}の簡単な説明は以下のとおりである。
 
 \begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
-\item[\texttt{chain}]
+\item[\chain]
   配置内の各アクターについて、そのアクターが他のアクターから生成されたものであるなら親アクターはその配置に存在している。
-\item[\texttt{gen\_fresh}]
+\item[\fresh]
   配置内の各アクターについて、そのアクターが次に生成するアクターの名前は配置内で新しい名前である。
-\item[\texttt{no\_dup}]
+\item[\nodup]
   配置内のすべてのアクターの名前は一意である。
 \end{description}
-
-\subsubsection{Functions}
 
 証明の説明に入る前に、この節で用いる関数をいくつか定義する。
 
 
 \begin{description}[style=nextline,leftmargin=12pt,parsep=0pt]
-\item[\texttt{actors} $: \textit{Configuration} \rightarrow \textit{Set(Actor)}$]
-  配置を受け取り、配置を構成するアクターの集合を返す。
 \item[\texttt{parent} $: \textit{Actor} \rightarrow \textit{Actor}$]
   アクターを受け取り、そのアクターの親アクターを返す。親がいない場合は、\texttt{nothing} を返す。
 \item[\texttt{gen\_number} $: \textit{Actor} \rightarrow \mathbb{N}$]
-  アクターを受け取り、そのアクターの名前の生成番号を返す。(generation number と generated number 生成番号の定義？)
+  アクターを受け取り、そのアクターの名前の世代番号を返す。
   トップレベルアクターの場合は、\texttt{nothing} を返す。
 \item[\texttt{next\_number} $: \textit{Actor} \rightarrow \mathbb{N}$]
-  アクターを受け取り、そのアクターが次に生成する番号を返す。
+  アクターを受け取り、そのアクターの生成番号を返す。
 \item[\texttt{name} $: \textit{Actor} \rightarrow \textit{Name}$]
   アクターを受け取り、そのアクターの名前を返す。
 \item[\texttt{names} $: \textit{Set(Actor)} \rightarrow \textit{Set(Name)}$]
   アクターの集合を受け取り、その集合の各アクターの名前の集合を返す。
 \end{description}
 
-連鎖性(chain)という、配置に関する述語を定義する。
-連鎖性とは、配置の中に含まれるアクターについて、そのアクターが他のアクターによって生成されたものであるならば、そのアクターも配置の中に含まれる、という述語である。
-つまり、トップレベルアクターを起点とする木になるということである。
-ここで、トップレベルアクターが複数ある場合でも、トップレベルアクター以外で親アクターが存在しないアクターが存在しなければ連鎖性は成り立つということに注意されたい。
-連鎖性は以下のように定義される。
+\subsubsection{\chain}
 
-\begin{definition}{chain}
+まず、\transinv の一つ目の述語である\emph{\chain (chain)}という、配置に関する述語を定義する。
+\chain とは、配置の中に含まれるアクターについて、そのアクターが他のアクターによって生成されたものであるならば、そのアクターも配置の中に含まれる、という述語である。
+つまり、トップレベルアクターを起点とする木になるということである。
+ここで、トップレベルアクターが複数ある場合でも、トップレベルアクター以外で親アクターが存在しないアクターが存在しなければ\chain は成り立つということに注意されたい。
+\chain は以下のように定義される。
+
+\begin{definition}{\chain}
 \begin{displaymath}
   \begin{array}{l}
-    \texttt{chain}(c) := \\
-    \quad \forall a \in \texttt{actors}(c), \forall p, p = \texttt{parent}(a) \Rightarrow p \in \texttt{actors}(c)
+    \texttt{chain}(c) :=
+    \forall a \in c, \forall p, p = \texttt{parent}(a) \Rightarrow p \in c
   \end{array}
 \end{displaymath}
 \end{definition}
 
-ここで、任意の遷移について連鎖性は保存される連鎖保存性を証明する。
+ここで、任意の遷移について\chain は保存される\chainpreserv を証明する。
 証明は遷移のラベルによる場合分けで行う。
-連鎖性はアクターの名前によってのみで決定され、かつ名前が変更されうる遷移ラベルは\textsc{New}しかないので、\textsc{New}のみ考えればよい。
+\chain はアクターの名前によってのみで決定され、かつ名前が変更されうる遷移ラベルは\textsc{New}しかないので、\textsc{New}のみ考えればよい。
 
-\begin{lemma}{連鎖保存性}
+\begin{lemma}{\chainpreserv}
 \begin{displaymath}
   \begin{array}{l}
-    \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
-    \quad \texttt{chain}(c) \wedge c \overset{l}{\leadsto} c' \Rightarrow \texttt{chain}(c')
+    \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label},
+    \texttt{chain}(c) \wedge c \overset{l}{\leadsto} c' \Rightarrow \texttt{chain}(c')
   \end{array}
 \end{displaymath}
 \end{lemma}
@@ -187,14 +210,16 @@ trans invariant は以下のように3つの述語\texttt{chain}, \texttt{gen\_f
 %%   \caption{連鎖保存性の証明}
 %% \end{figure}
 
-次に、\coqi{gen_fresh}を定義する。
-\coqi{gen_fresh}は任意のアクターが次に生成する名前は必ず一意になるという述語であるが、
+\subsubsection{\fresh}
+
+次に、\fresh を定義する。
+\fresh は任意のアクターが次に生成する名前は必ず一意になるという述語であるが、
 Actarioではこれを以下のように定義することで実現している。
 %% We define \texttt{gen\_fresh} predicate that, for each actor in the configuration, the name of its child is always fresh.
 %% The definition of \texttt{gen\_fresh} is complicated a little.
 %% We translate the proposition that next generated name is fresh to the following.
 
-\begin{definition}{gen fresh}
+\begin{definition}{\fresh}
 \begin{displaymath}
   \begin{array}{l}
     \texttt{gen\_fresh}(c) := \\
@@ -204,26 +229,16 @@ Actarioではこれを以下のように定義することで実現している�
 \end{displaymath}
 \end{definition}
 
-この\coqi{gen_fresh}が成り立っていれば必ず一意な名前を生成するということを確かめる。
+アクターの名前は生成するアクターの名前とその生成番号のペアで生成されるため、この\fresh が成り立っていれば必ず一意な名前を生成するということは、あるアクターの名前とそのアクターの生成番号からなる名前を持つようなアクターが存在しないことから成り立つ。
+ただし、次に生成するアクターの名前は一意でもその次に生成するアクターは一意ではないこともある。
+例えば、同じ名前でかつ次の生成番号も同じという2つのアクターがいた場合、まず片方のアクターが生成するアクターの名前は一意だが、その次にもう片方のアクターがアクターを生成したとすると、名前が被ってしまう(これを第一パターンとする)。
+また、親アクターがシステム内に存在せずに、親の親は存在しているという場合、親の親が次に生成するアクターの名前は被らないが、その子アクターが次に生成する名前は他のアクターの名前と被ってしまう可能性がある(これを第二パターンとする)。
+このように、遷移前で\fresh が成り立っていても、いくつか遷移したあとで一意ではない名前を生成することはありうる。
+以上から、遷移後も\fresh が成り立つようにするためには、遷移前は\fresh という条件だけでは足りない。
+第一パターンは\nodup を、第二パターンは\chain を前提に含めることで防ぐことができるので、
+\freshpreserv は以下の様な補題となる。
 
-
-
-%% It is guaranteed that the actor name generated in the next is fresh if satisfying \texttt{gen\_fresh} predicate by the relation of next generation numbers and actor names. %% For each actor in the configuration, if its parent is in the configuration, the next generation number of the parent actor is greater than the generation number of the name of the child actor.
-%% However, the actor name generated after the next is not always fresh name.
-%% For example, if there are two actors ($A$ and $B$) that have the same name and the same next generation number and actor $A$ generates a child actor and actor $B$ generates a child actor, although \texttt{gen\_fresh} holds, these child actors have the same name.
-%% Furthermore, if the parent of the actor $A$ does not exist in the configuration and the parent of the parent exists in the configuration, and the parent of the parent actor generates an actor and it also generates an actor, then the name is possible to have the same as $A$'s one.
-
-つまり、あるアクターについて、システム内に親アクターがいる場合、親アクターが次に生成する番号は自分の番号よりも大きい、ということにより、次に生成するアクターの名前が被らないようにしている。
-ただし、次に生成するアクターの名前は fresh でもその次に生成するアクターは fresh ではないこともある。
-例えば、同じ名前でかつ次の生成番号も同じという2つのアクターがいた場合、まず片方のアクターが生成するアクターの名前は fresh だが、その次にもう片方のアクターがアクターを生成したとすると、名前が被ってしまう。
-また、親アクターがシステム内に存在せずに、親の親は存在しているという場合、親の親が次に生成するアクターの名前は被らないが、その子アクターが次に生成する名前は被ってしまう可能性がある。
-
-
-%% Thus, to prove \textit{gen fresh preservation} proposition that \texttt{gen\_fresh} is preserved between transitions, it is necessary to use \texttt{chain} and \texttt{no\_dup} as hypotheses.
-%% The proof is by ...
-%% 以上のように gen\_fresh だけでは gen\_fresh を導けないので、gen\_fresh の証明には chain と no\_dup の性質が必要になる。
-
-\begin{lemma}{gen fresh preservation}
+\begin{lemma}{\freshpreserv}
 \begin{displaymath}
   \begin{array}{l}
     \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
@@ -233,24 +248,27 @@ Actarioではこれを以下のように定義することで実現している�
 \end{displaymath}
 \end{lemma}
 
-\subsubsection{一意性}
+\subsubsection{\nodup}
 
-一意性(\texttt{no\_dup})を定義する。
+最後に\nodup を定義する。
 一意性は、与えられた配置のすべてのアクターの名前が一意であるという述語である。
 これは最終的に証明したい名前の一意性の定義と同じである。
 一意性は以下のように定義できる。
 
+\begin{definition}{\nodup}
 \begin{displaymath}
   \begin{array}{l}
-    \texttt{no\_dup}(c) := \\
-    \quad \forall a \in \texttt{actors}(c), \texttt{name}(a) \notin
-    \texttt{names}(\texttt{actors}(c) \setminus \{a\})
+    \texttt{no\_dup}(c) :=
+    \forall a \in c, \texttt{name}(a) \notin
+    \texttt{names}(c \setminus \{a\})
   \end{array}
 \end{displaymath}
+\end{definition}
 
-連鎖保存性、新鮮保存性と同様に、一意保存性も定義する。
+\chainpreserv、\freshpreserv と同様に、\noduppreserv も定義する。
+遷移後も\nodup が成り立つためには遷移前の配置が\nodup と\fresh を満たす必要がある。
 
-\begin{lemma}{一意保存性}
+\begin{lemma}{\noduppreserv}
 \begin{displaymath}
   \begin{array}{l}
     \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
@@ -261,37 +279,39 @@ Actarioではこれを以下のように定義することで実現している�
 
 \subsubsection{名前の一意性の証明}
 
-この意味論によって動的に生成される名前が一意になるということの証明を行う。
-まず、遷移の間で遷移不変性が保存されるという遷移不変保存性(trans invariant preservation)を証明する。
-遷移不変性は連鎖性、新鮮性、一意性から成るので、遷移不変保存性は明らかに成り立つ。
+ここまでで\transinv の定義ができたので、この意味論によって動的に生成される名前が一意になるということの証明を行う。
+まず、遷移の間で\transinv が保存されるという\emph{\transinvpreserv (trans invariant preservation)}を証明する。
+\transinv は\chain、\fresh、\nodup から成るので、
+\chainpreserv、\freshpreserv、\noduppreserv から、\transinvpreserv は明らかに成り立つ。
 
-\begin{lemma}{遷移不変保存性}
+\begin{lemma}{\transinvpreserv}
   \begin{displaymath}
     \begin{array}{l}
       \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
-      \quad \texttt{trans\_invariant}(c) \wedge c \overset{l}{\leadsto} c' \Rightarrow \\
-      \quad \texttt{trans\_invariant}(c')
+      \quad \texttt{trans\_invariant}(c) \wedge c \overset{l}{\leadsto} c' \Rightarrow
+      \texttt{trans\_invariant}(c')
     \end{array}
   \end{displaymath}
 \end{lemma}
 
-次に初期状態について遷移不変性が成り立っていれば、任意回の遷移後も遷移不変性が成り立つということをを証明する。
+次に初期状態について\transinv が成り立っていれば、任意回の遷移後も\transinv が成り立つという補題($\transinvpreserv^{\star}$)を証明する。
 
-\begin{lemma}{遷移不変性(star)}
+\begin{lemma}{$\transinvpreserv^{\star}$}
   \begin{displaymath}
     \begin{array}{l}
       \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
-      \quad \texttt{trans\_invariant}(c) \wedge c \overset{l}{\leadsto\star} c' \Rightarrow \\
-      \quad \texttt{trans\_invariant}(c')
+      \quad \texttt{trans\_invariant}(c) \wedge c \overset{l}{\leadsto\star} c' \Rightarrow
+      \texttt{trans\_invariant}(c')
     \end{array}
   \end{displaymath}
 \end{lemma}
 
-$c \overset{l}{\leadsto\star} c'$ represents reflexive transitive closure of transition.
-The proof is by induction of reflexive transitive closure of transition and trans invariant preservation.
+ここで、$c \overset{l}{\leadsto\star} c'$ は遷移の反射推移閉包である。
+この証明は遷移についての帰納法と\transinvpreserv によって証明できる。
 
-Finally, we can prove name uniqueness.
-\begin{theorem}{name uniqueness}
+最後に、初期状態について\transinv が成り立っていれば名前の一意性は成り立つということを証明する。
+\transinv は\nodup から成るので、$\transinvpreserv^{\star}$から明らかである。
+\begin{theorem}{名前の一意性}
   \begin{displaymath}
     \begin{array}{l}
       \forall c, c' \in \textit{Configuration}, \forall l \in \textit{Label}, \\
@@ -299,4 +319,3 @@ Finally, we can prove name uniqueness.
     \end{array}
   \end{displaymath}
 \end{theorem}
-This is obvious by trans invariant preservation star because \texttt{no\_dup} is in \texttt{trans\_invariant}.
