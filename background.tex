@@ -13,6 +13,7 @@
 アクターモデルにおける\emph{振る舞い(behavior)}とは，アクターがメッセージを受け取って何をするか，というものである．
 この「何をするか」という部分をアクターの\emph{アクション(action)}と呼ぶ．
 アクターのアクションには以下の3つのものがある．
+これらの組み合わせでアクターの振る舞いを表現する。
 
 \begin{itemize}
 \item 新しいアクターを生成する
@@ -23,8 +24,9 @@
 
 \subsection{配置}
 
-\emph{配置(configuration)}とは，システムの状態のスナップショットのことである．
+\emph{配置(configuration)}とは，アクターシステムの状態のスナップショットのことである．
 その時点でのアクターおよびまだ受け取られていないメッセージの集合から構成される．
+アクターモデルの操作的意味論は配置のラベル付き遷移システムとして表される。
 
 \subsection{アクターの名前}
 
@@ -67,8 +69,8 @@ Fixpoint reverse (l : list A) :=
 \caption{\coqi{reverse}関数の定義}\label{code:background:reverse}
 \end{figure}
 
-リストを逆順にする関数\coqi{reverse}は，二度適用するともとのリストに戻るという性質を持っているので，ここで定義した関数がその声質を満たしているということを確かめるために，証明を行う(証明できなければここで定義した関数は間違った実装になっているということになる)．
-Coqでのこの定理の証明は図\ref{code:background:reverse-reverse}のようになる．
+リストを逆順にする関数\coqi{reverse}は，二度適用するともとのリストに戻るという性質を持っているので，ここで定義した関数がその性質を満たしているということを確かめるために，証明を行う(証明できなければここで定義した関数は間違った実装になっているということになる)．
+Coqによるこの定理の証明は図\ref{code:background:reverse-reverse}のようになる．
 ここでは補題\coqi{snoc_reverse}と目的の定理\coqi{reverse_reverse_id}を証明している．
 \coqi{Lemma}および\coqi{Theorem}の後ろが命題の名前と命題を表す式になっており，
 \coqi{Proof}から\coqi{Qed}までが命題を証明している部分である．証明の部分に書かれているコマンド(\lstinline{intros} や\coqi{induction}などのこと)は証明を進めていく際の方針を表すものであり，これを\emph{タクティク}と呼ぶ．
@@ -101,7 +103,7 @@ Qed.
 \subsection{コード抽出}
 
 CoqにはOCaml, Haskell, Schemeへのコード抽出器がデフォルトで内蔵されている．
-抽出器はプラグインの形で実装されており，Coqの型定義・関数定義からMiniMLというMLのサブセットにあたるような言語の抽象構文木に一旦変換され，そこから各言語に変換される．
+抽出器はプラグインの形で実装されており，Coqの型定義・関数定義からMiniMLというMLのサブセットにあたるような言語の抽象構文木に一旦変換され，そこから各言語に変換される\cite{letouzey2008extraction}．
 上の\coqi{reverse}関数をOCamlに向けて変換すると，図\ref{code:background:reverse-erl}のようになる．\coqi{Extraction}コマンドでその関数を抽出することができる．
 \coqi{Recursive Extraction}コマンドを使うとその関数が依存している型と関数も抽出される．
 
