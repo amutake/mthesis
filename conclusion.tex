@@ -68,7 +68,7 @@ Lemma possible_labels_cat :
 
 
 さらに，\fairness を用いなければ証明できないような命題の証明を行えるような仕組みを整えなければいけない．
-例えば，図\ref{code:conclusion:pingpong}のような，(1) pingというメッセージを受け取ると，pingメッセージの送り主に対してpongというメッセージを送信するサーバ，(2) サーバに対してpingというメッセージを送り続ける2つのクライアント，を考える．このシステムは図\ref{code:conclusion:pingpong-spec}，つまりクライアントはpongメッセージを受け取る、という定理を満たすべきだが，
+例えば，図\ref{code:conclusion:pingpong}のような，(1) pingというメッセージを受け取ると，pingメッセージの送り主に対してpongというメッセージを送信するサーバ，(2) サーバに対してpingというメッセージを送り続ける2つのクライアント，を考える．このシステムは図\ref{code:conclusion:pingpong-spec}，つまりクライアントはpongメッセージを受け取る，という定理を満たすべきだが，
 \ref{chapter:proof}で定義した\coqi{fairness}を使うためには，あるラベルが遷移可能になることが無限に繰り返されるようなパスであることを示す必要があり現状の証明機構では使いづらい．そのため，\coqi{fairness}を使いやすいようなタクティクなどの仕組みを作るか，\coqi{fairness}自体を同等または弱い性質でかつ扱いやすいものに定義し直す必要がある．
 
 \begin{figure}[tp]

@@ -17,7 +17,7 @@
 この手法はAffeldtらによるAppl$\pi$\cite{Affeldt200817}で用いられている手法である．Appl$\pi$は$\pi$計算のためのライブラリであるが，\fairness の定義方法についてはアクターモデルに対しても同様に用いることができる．
 
 \subsection{遷移パス}
-遷移パスは自然数$\mathbb{N}$から\texttt{option config}型への関数として定義する (図~\ref{code:formalization:path})．\texttt{config}型は配置を表す型であり、\texttt{option}は型引数で受け取った型の値を持つか、または値がないことを表す型(型コンストラクタ)である。
+遷移パスは自然数$\mathbb{N}$から\texttt{option config}型への関数として定義する (図~\ref{code:formalization:path})．\texttt{config}型は配置を表す型であり，\texttt{option}は型引数で受け取った型の値を持つか，または値がないことを表す型(型コンストラクタ)である．
 定義域の自然数は，初期状態から何回目の遷移によってこの配置になったかという番号である．この番号をインデックスと呼ぶ．
 値域はそのインデックスに対応する配置を表す．\texttt{config}型ではなく\texttt{option config}型になっているのは，これ以上遷移ができないパスも表したいからである．つまり，これ以上遷移ができない配置のインデックスを$n$とすると，$\forall m > 0, n + m$に遷移パス関数を適用した結果は\texttt{None}になる．
 
@@ -46,7 +46,7 @@ Definition is_transition_path (p : path) : Prop :=
 配置はアクターの集合であるため，本来はその中でアクターの順序はない．しかし，Actarioでの定義はアクターのリストになっており，順序がある．
 ラベル付き遷移システムの各遷移の定義(付録\ref{appendix:trans})では入れ替えて等しいものとしているため，遷移パスの各配置も順序を入れ替えられるようにしてよい．
 この命題は以下のようになるが，遷移パスは実際には関数であるためこの命題は証明できない(関数の返り値は引数に応じて一意に決まるため)．
-よってこれは公理とする(図\ref{code:proof:path-perm})．また、ここでの$permutation$は、2つのリストに対してその要素の順序を入れ替えると等しくなるということを表す述語である。
+よってこれは公理とする(図\ref{code:proof:path-perm})．また，ここでの$permutation$は，2つのリストに対してその要素の順序を入れ替えると等しくなるということを表す述語である．
 
 \begin{displaymath}
   \begin{array}{l}
