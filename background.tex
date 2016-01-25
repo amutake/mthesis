@@ -64,8 +64,7 @@ Fixpoint reverse (l : list A) :=
   | hd :: tl => reverse tl ++ [hd]
   end.
 \end{lstlisting}
-\label{code:background:reverse}
-\caption{\coqi{reverse}関数の定義}
+\caption{\coqi{reverse}関数の定義}\label{code:background:reverse}
 \end{figure}
 
 リストを逆順にする関数\coqi{reverse}は，二度適用するともとのリストに戻るという性質を持っているので，ここで定義した関数がその声質を満たしているということを確かめるために，証明を行う(証明できなければここで定義した関数は間違った実装になっているということになる)．
@@ -95,8 +94,7 @@ Proof.
     reflexivity.
 Qed.
 \end{lstlisting}
-\label{code:background:reverse-reverse}
-\caption{\coqi{reverse}を二度適用するともとのリストに戻ることの証明}
+\caption{\coqi{reverse}を二度適用するともとのリストに戻ることの証明}\label{code:background:reverse-reverse}
 \end{figure}
 
 
@@ -116,8 +114,7 @@ Extraction reverse.
  * | Cons (hd, tl) -> app (reverse tl) (Cons (hd, Nil))
  *)
 \end{lstlisting}
-\label{code:background:reverse-erl}
-\caption{\coqi{reverse}の抽出}
+\caption{\coqi{reverse}の抽出}\label{code:background:reverse-erl}
 \end{figure}
 
 %% \subsection{基本的な構文}

@@ -32,8 +32,7 @@ Theorem receive_n :
                        top
                        (nat_msg (fact n)).
 \end{lstlisting}
-  \label{code:conclusion:fact-n}
-  \caption{階乗計算システムが任意の自然数に対して正しく階乗を計算するという定理}
+  \caption{階乗計算システムが任意の自然数に対して正しく階乗を計算するという定理}\label{code:conclusion:fact-n}
 \end{figure}
 
 %% これを証明するためには何らかの値に対して帰納法を使う必要があるが，単純に階乗を計算したい自然数$n$に対して帰納法を使うと，帰納法の仮定が\coqi{factorial_system k top}についてのパスに関する式，ゴールが\coqi{factorial_system (k + 1) top}についてのパスに関する式という形になり，帰納法の仮定が使えない．
@@ -47,8 +46,7 @@ Theorem receive_n :
 \begin{figure}[tp]
   \centering
   \includegraphics[width=16cm]{./img/conclusion/fact_n.pdf}
-  \label{img:conclusion:fact}
-  \caption{$n$の階乗を計算するシステムの動き}
+  \caption{$n$の階乗を計算するシステムの動き}\label{img:conclusion:fact}
 \end{figure}
 
 しかし，現在の証明機構では，ラベルおよびそのラベルによって遷移した後の配置を計算するために，配置内のすべてのアクターが具体的に定まっている必要がある．
@@ -65,8 +63,7 @@ Lemma possible_labels_cat :
     possible_labels (c ++ c') =
     possible_labels c ++ possible_labels c'
 \end{lstlisting}
-\label{code:conclusion:possible-labels-cat}
-\caption{\coqi{possible_labels}についての補題}
+\caption{\coqi{possible_labels}についての補題}\label{code:conclusion:possible-labels-cat}
 \end{figure}
 
 
@@ -109,8 +106,7 @@ Definition pingpong_system : config :=
     become done (* それ以降は何もしない *)
   ).
 \end{lstlisting}
-  \label{code:conclusion:pingpong}
-  \caption{ping-pongシステム}
+  \caption{ping-pongシステム}\label{code:conclusion:pingpong}
 \end{figure}
 
 \begin{figure}[tp]
@@ -120,8 +116,7 @@ Theorem receive_client1 :
   eventually_receive pingpong_system
     (generated 1 top) (str_msg "pong").
 \end{lstlisting}
-  \label{code:conclusion:pingpong-spec}
-  \caption{ping-pongシステムが満たすべき性質}
+  \caption{ping-pongシステムが満たすべき性質}\label{code:conclusion:pingpong-spec}
 \end{figure}
 
 \subsection{障害の形式化}

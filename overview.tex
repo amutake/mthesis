@@ -16,8 +16,7 @@ Actarioは，(1) アクターシステムを記述するための型と記法，
 \begin{figure}[tp]
   \centering
   \includegraphics[width=15cm]{./img/overview/workflow.pdf}
-  \label{img:overview:workflow}
-  \caption{Actarioのワークフロー}
+  \caption{Actarioのワークフロー}\label{img:overview:workflow}
 \end{figure}
 
 \section{例:階乗計算アクターシステム}
@@ -39,8 +38,7 @@ Actarioを実際にどのように使うかを説明する．
 \begin{figure}[tp]
   \centering
   \includegraphics[width=15cm]{./img/overview/fact.pdf}
-  \label{img:overview:fact}
-  \caption{$3!$を計算する際のシステムの動き}
+  \caption{$3!$を計算する際のシステムの動き}\label{img:overview:fact}
 \end{figure}
 
 Actarioを用いると階乗計算アクターシステムは図\ref{code:overview:fact-impl}のように記述することができる．以下でコードの説明を行う．
@@ -65,8 +63,7 @@ Actarioを用いると階乗計算アクターシステムは図\ref{code:overvi
 
 \begin{figure}[tp]
   \lstinputlisting{./code/overview/fact_impl.v}
-  \label{code:overview:fact-impl}
-  \caption{階乗計算アクターシステム}
+  \caption{階乗計算アクターシステム}\label{code:overview:fact-impl}
 \end{figure}
 
 \subsection{型と記法}
@@ -79,8 +76,7 @@ Actarioを用いてアクターシステムを記述する際に使う型およ�
 
 \begin{figure}
   \lstinputlisting{./code/overview/message.v}
-  \label{code:overview:message}
-  \caption{\coqi{message}型の定義}
+  \caption{\coqi{message}型の定義}\label{code:overview:message}
 \end{figure}
 
 \coqi{behavior}はアクターの振る舞い，つまりメッセージを受け取ってどのような処理をするかを表すような型である．
@@ -90,8 +86,7 @@ Actarioを用いてアクターシステムを記述する際に使う型およ�
 
 \begin{figure}
   \lstinputlisting{./code/overview/behavior.v}
-  \label{code:overview:behavior}
-  \caption{\coqi{behavior}型の定義}
+  \caption{\coqi{behavior}型の定義}\label{code:overview:behavior}
 \end{figure}
 
 Actarioではアクターモデルのアクションとして\coqi{new}，\coqi{self}，\coqi{self}，\coqi{become}があり，これらは\coqi{actions}型の値コンストラクタとなっている．
@@ -103,8 +98,7 @@ Actarioではアクターモデルのアクションとして\coqi{new}，\coqi{
 
 \begin{figure}
   \lstinputlisting{./code/overview/actions.v}
-  \label{code:overview:actions}
-  \caption{\coqi{actions}型の定義}
+  \caption{\coqi{actions}型の定義}\label{code:overview:actions}
 \end{figure}
 
 このように，アクションの列は継続渡しの形で定義されている．アクションを記述する際には，通常のCoqの構文のとおりに記述しても良いが，煩雑になるため，CoqのNotation機能を使って図\ref{code:overview:notation}のように記述できるようにしている．
@@ -143,8 +137,7 @@ become $new\_state$
 Theorem receive_3 :
   eventually_receive (factorial_system 3 top) top (nat_msg 6).
 \end{lstlisting}
-\label{code:overview:fact-spec}
-\caption{命題の定義}
+\caption{命題の定義}\label{code:overview:fact-spec}
 \end{figure}
 
 そして，この命題は図\ref{code:overview:fact-proof}のように証明することができる．
@@ -159,8 +152,7 @@ Proof.
   found 22 p22 p23.
 Qed.
 \end{lstlisting}
-  \label{code:overview:fact-proof}
-  \caption{証明}
+  \caption{証明}\label{code:overview:fact-proof}
 \end{figure}
 
 
@@ -175,14 +167,12 @@ ActarioはErlangへのコード抽出機構も持っているため，
 \begin{lstlisting}
 ActorExtraction "factorial" factorial_behv.
 \end{lstlisting}
-\label{code:overview:extraction}
-\caption{コード抽出}
+\caption{コード抽出}\label{code:overview:extraction}
 \end{figure}
 
 \begin{figure}
   \lstinputlisting[language=Erlang]{./code/overview/fact_impl.erl}
-  \label{code:overview:fact-impl-erl}
-  \caption{Erlangに抽出されたアクターシステム}
+  \caption{Erlangに抽出されたアクターシステム}\label{code:overview:fact-impl-erl}
 \end{figure}
 
 \begin{figure}
@@ -207,6 +197,5 @@ int2nat(0) -> {o};
 int2nat(N) when N > 0 -> {s, int2nat(N - 1)};
 int2nat(_) -> {o}.
 \end{lstlisting}
-\label{code:overview:run}
-\caption{抽出したアクターシステムを起動するErlangコード}
+\caption{抽出したアクターシステムを起動するErlangコード}\label{code:overview:run}
 \end{figure}

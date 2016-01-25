@@ -25,8 +25,7 @@
 \begin{lstlisting}
 Definition path := nat -> option config.
 \end{lstlisting}
-  \label{code:formalization:path}
-  \caption{遷移パスの定義}
+  \caption{遷移パスの定義}\label{code:formalization:path}
 \end{figure}
 
 また，遷移パスの仕様を，パスに対する制約の形で定義する(図\ref{code:formalization:path-spec})．
@@ -41,8 +40,7 @@ Definition is_transition_path (p : path) : Prop :=
        (exists c', p (S i) = Some c' -> exists l, c ~(l)~> c')) /\
     (p i = None -> p (S i) = None).
 \end{lstlisting}
-  \label{code:formalization:path-spec}
-  \caption{遷移パスの仕様}
+  \caption{遷移パスの仕様}\label{code:formalization:path-spec}
 \end{figure}
 
 配置はアクターの集合であるため，本来はその中でアクターの順序はない．しかし，Actarioでの定義はアクターのリストになっており，順序がある．
@@ -67,8 +65,7 @@ Axiom path_perm :
     p i = Some c ->
     p i = Some c'.
 \end{lstlisting}
-  \label{code:proof:path-perm}
-  \caption{遷移パスの配置の入れ替え}
+  \caption{遷移パスの配置の入れ替え}\label{code:proof:path-perm}
 \end{figure}
 
 \subsection{\enabled}
@@ -80,8 +77,7 @@ Actarioでは，\enabled はある配置からあるラベルによって遷移�
 Definition enabled (c : config) (l : label) : Prop :=
   exists c', c ~(l)~> c'.
 \end{lstlisting}
-  \label{code:formalization:enabled}
-  \caption{\enabled}
+  \caption{\enabled}\label{code:formalization:enabled}
 \end{figure}
 
 \subsection{Inifinitely Often Enabled}
@@ -99,8 +95,7 @@ Definition infinitely_often_enabled (l : label)
       p i' = Some c' /\
       enabled c' l.
 \end{lstlisting}
-\label{code:proof:infinitely-often-enabled}
-\caption{infinitely often enabled}
+\caption{infinitely often enabled}\label{code:proof:infinitely-often-enabled}
 \end{figure}
 
 \subsection{Eventually Processed}
@@ -113,8 +108,7 @@ Definition eventually_processed (l : label) (p : path) : Prop :=
   exists n c c',
     p n = Some c /\ p (S n) = Some c' /\ c ~(l)~> c'.
 \end{lstlisting}
-\label{code:proof:eventually-processed}
-\caption{eventually processed}
+\caption{eventually processed}\label{code:proof:eventually-processed}
 \end{figure}
 
 
@@ -136,8 +130,7 @@ Definition fairness : Prop :=
       infinitely_often_enabled l p' ->
       eventually_processed l p').
 \end{lstlisting}
-\label{code:formalization:fairness}
-\caption{\fairness の定義}
+\caption{\fairness の定義}\label{code:formalization:fairness}
 \end{figure}
 
 \section{命題の定義}
@@ -155,8 +148,7 @@ Definition eventually_do_label (c0 : config) (l : label) :=
     is_transition_path p ->
     eventually_processed l p.
 \end{lstlisting}
-\label{code:proof:ev-do-label}
-\caption{性質に関する述語の定義}
+\caption{性質に関する述語の定義}\label{code:proof:ev-do-label}
 \end{figure}
 
 \section{遷移可能なラベルと遷移後の配置の計算}
@@ -200,8 +192,7 @@ Definition possible_labels (c : config) : seq label :=
     | _ => None
    end) c).
 \end{lstlisting}
-\label{code:proof:possible-labels}
-\caption{\coqi{possible_labels}の定義}
+\caption{\coqi{possible_labels}の定義}\label{code:proof:possible-labels}
 \end{figure}
 
 \subsection{遷移後の配置の計算}
@@ -242,8 +233,7 @@ Lemma trace_path :
          (p (S i) = None)                      (* if possible_labels is empty *)
          (possible_labels c).
 \end{lstlisting}
-\label{code:proof:trace-path}
-\caption{\coqi{trace_path}の定義}
+\caption{\coqi{trace_path}の定義}\label{code:proof:trace-path}
 \end{figure}
 
 \subsection{タクティク}
@@ -271,8 +261,7 @@ Ltac found i p p' :=
       eapply trans_new || eapply trans_self);
     apply/Permutation_refl.
 \end{lstlisting}
-\label{code:proof:tactics}
-\caption{タクティク}
+\caption{タクティク}\label{code:proof:tactics}
 \end{figure}
 
 \subsection{証明の方法}

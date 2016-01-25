@@ -31,8 +31,7 @@ S (S O)
 \end{lstlisting}
 (b) Erlangでの\coqi{nat}型の値
 \end{minipage}
-\label{code:extraction:datamapping-nat}
-\caption{\coqi{nat}型の値}
+\caption{\coqi{nat}型の値}\label{code:extraction:datamapping-nat}
 \end{figure}
 
 もう少し一般化して，図\ref{code:extraction:adt}のようにCoqの代数的(帰納的)データ型の値はErlangのアトムとタプルに変換される．
@@ -66,8 +65,7 @@ ConstrT (ConstrA a_1 a_2 ... a_n)
 \end{lstlisting}
 (b) Erlangでの代数的データ型の値
 \end{minipage}
-\label{code:extraction:adt}
-\caption{代数的データ型}
+\caption{代数的データ型}\label{code:extraction:adt}
 \end{figure}
 
 \section{アクションのマッピング}
@@ -110,8 +108,7 @@ behvA(State) ->
 \end{lstlisting}
 (b) 返還後
 \end{minipage}
-\label{code:extraction:action}
-\caption{アクションの変換}
+\caption{アクションの変換}\label{code:extraction:action}
 \end{figure}
 
 このようにすることで，Actarioを使って定義したアクターシステムを，アクターモデルとして同様の動きをするErlangのコードに変換することができる．
@@ -149,8 +146,7 @@ foo() ->
 \end{lstlisting}
 (b) 変換後
 \end{minipage}
-\label{code:extraction:recursive}
-\caption{関数内相互再帰関数}
+\caption{関数内相互再帰関数}\label{code:extraction:recursive}
 \end{figure}
 
 \section{トップレベルの値}
@@ -174,8 +170,7 @@ one() -> {s, zero()}.
 \end{lstlisting}
 (b) 変換後
 \end{minipage}
-\label{code:extraction:toplevel-value-impossible}
-\caption{トップレベルの値定義}
+\caption{トップレベルの値定義}\label{code:extraction:toplevel-value-impossible}
 \end{figure}
 
 Coqでは副作用がないため0引数関数呼び出しと値の呼び出しを同一視できるが，
@@ -206,6 +201,5 @@ plus1_call(N) -> plus1_alias(N).
 \end{lstlisting}
 (b) 変換後
 \end{minipage}
-\label{code:extraction:toplevel-value-func}
-\caption{トップレベルの値定義(関数の場合)}
+\caption{トップレベルの値定義(関数の場合)}\label{code:extraction:toplevel-value-func}
 \end{figure}
