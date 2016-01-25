@@ -168,7 +168,7 @@ Qed.
 
 ActarioはErlangへのコード抽出機構も持っているため，
 定義したアプリケーションをErlangに変換して実行させることもできる．
-図\ref{code:overview:extraction}のコマンドを実行すると，\coqi{factorial_behv}のErlang実装が図\ref{code:overview:fact-impl-erl}のようなコードで\texttt{factorial.erl}というファイル名で吐き出される．
+\coqi{Extraction}コマンドではなく、図\ref{code:overview:extraction}のように\coqi{ActorExtraction}コマンドを実行すると，\coqi{factorial_behv}のErlang実装が図\ref{code:overview:fact-impl-erl}のようなコードで\texttt{factorial.erl}というファイル名で吐き出される．
 これに対して，図\ref{code:overview:run}といったようなコードで変換されたアクターシステムを起動させると，実際にアクターシステムを実行することができる．
 
 \begin{figure}[tp]
@@ -176,7 +176,7 @@ ActarioはErlangへのコード抽出機構も持っているため，
 ActorExtraction "factorial" factorial_behv.
 \end{lstlisting}
 \label{code:overview:extraction}
-\caption{証明}
+\caption{コード抽出}
 \end{figure}
 
 \begin{figure}
